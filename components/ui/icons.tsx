@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { ReactNode, SVGProps } from "react";
 
 export type IconName =
   | "grid"
@@ -42,7 +42,7 @@ export function Icon({
     ...props,
   };
 
-  const paths: Record<IconName, React.ReactNode> = {
+  const paths: Record<IconName, ReactNode> = {
     grid: <>
       <rect x="4" y="4" width="6" height="6" rx="1.5" />
       <rect x="14" y="4" width="6" height="6" rx="1.5" />

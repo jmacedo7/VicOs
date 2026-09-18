@@ -151,3 +151,21 @@ using (bucket_id='company-assets' and (storage.foldername(name))[1] in (select c
 drop policy if exists company_assets_delete on storage.objects;
 create policy company_assets_delete on storage.objects for delete to authenticated
 using (bucket_id='company-assets' and (storage.foldername(name))[1] in (select company_id::text from public.users where id=auth.uid()));
+
+create or replace function private.enforce_chat_retention()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+declare days integer;
+begin
+  select c.chat_retention_days into days from public.conversations c where c.id=NEW.conversation_id;
+  if coalesce(days,0) > 0 then
+    delete from public.messages m using public.conversations c
+    where m.conversation_id=c.id
+      and c.company_id=(select company_id from public.conversations where id=NEW.conversation_id)
+      and m.created_at < now() - make_interval(days => days);
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists messages_enforce_retention on public.messages;
+create trigger messages_enforce_retention after insert on public.messages for each row execute function private.enforce_chat_retention();

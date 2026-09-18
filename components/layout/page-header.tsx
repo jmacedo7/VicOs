@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from "@/components/ui/icons";
 
 export function PageHeader({
   eyebrow,
@@ -14,14 +15,25 @@ export function PageHeader({
   href?: string;
 }) {
   return (
-    <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-      <div>
-        {eyebrow && <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-500">{eyebrow}</p>}
-        <h1 className="text-3xl font-black tracking-tight text-slate-950">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p>
+    <header className="vicos-enter mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+      <div className="min-w-0">
+        {eyebrow && (
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.2em] text-blue-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+            {eyebrow}
+          </div>
+        )}
+        <h1 className="text-[2rem] font-black tracking-[-.035em] text-slate-950 md:text-[2.35rem]">
+          {title}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          {description}
+        </p>
       </div>
+
       {action && href && (
-        <Link href={href} className="inline-flex items-center justify-center rounded-xl bg-blue-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-600">
+        <Link href={href} className="vicos-button shrink-0">
+          <Icon name="plus" size={16} strokeWidth={2} />
           {action}
         </Link>
       )}

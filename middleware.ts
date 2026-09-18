@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const protectedPaths = ["/dashboard","/contacts","/accounts","/finance","/team","/synchronization","/history","/company","/settings"];
+const protectedPaths = ["/dashboard","/contacts","/accounts","/finance","/team","/synchronization","/history","/company","/settings","/messages","/profile"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -24,4 +24,4 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/dashboard/:path*","/contacts/:path*","/accounts/:path*","/finance/:path*","/team/:path*","/synchronization/:path*","/history/:path*","/company/:path*","/settings/:path*"] };
+export const config = { matcher: ["/dashboard/:path*","/contacts/:path*","/accounts/:path*","/finance/:path*","/team/:path*","/synchronization/:path*","/history/:path*","/company/:path*","/settings/:path*","/messages/:path*","/profile/:path*"] };

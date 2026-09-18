@@ -11,6 +11,7 @@ const links: NavItem[] = [
   ["team", "Equipe", "/team"],
   ["sync", "Sincronização", "/synchronization"],
   ["history", "Histórico", "/history"],
+  ["message", "Mensagens", "/messages"],
 ];
 
 const secondary: NavItem[] = [

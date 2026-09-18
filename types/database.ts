@@ -136,6 +136,9 @@ export type Database = {
         Row: {
           address: string | null
           business_segment: string | null
+          chat_allow_attachments: boolean
+          chat_enabled: boolean
+          chat_retention_days: number
           city: string | null
           created_at: string | null
           description: string | null
@@ -154,6 +157,9 @@ export type Database = {
         Insert: {
           address?: string | null
           business_segment?: string | null
+          chat_allow_attachments?: boolean
+          chat_enabled?: boolean
+          chat_retention_days?: number
           city?: string | null
           created_at?: string | null
           description?: string | null
@@ -172,6 +178,9 @@ export type Database = {
         Update: {
           address?: string | null
           business_segment?: string | null
+          chat_allow_attachments?: boolean
+          chat_enabled?: boolean
+          chat_retention_days?: number
           city?: string | null
           created_at?: string | null
           description?: string | null
@@ -282,6 +291,7 @@ export type Database = {
           device_key_id: string
           encrypted_key: string
           iv: string
+          sender_device_key_id: string | null
         }
         Insert: {
           conversation_id: string
@@ -289,6 +299,7 @@ export type Database = {
           device_key_id: string
           encrypted_key: string
           iv: string
+          sender_device_key_id?: string | null
         }
         Update: {
           conversation_id?: string
@@ -296,6 +307,7 @@ export type Database = {
           device_key_id?: string
           encrypted_key?: string
           iv?: string
+          sender_device_key_id?: string | null
         }
         Relationships: [
           {
@@ -308,6 +320,13 @@ export type Database = {
           {
             foreignKeyName: "conversation_key_envelopes_device_key_id_fkey"
             columns: ["device_key_id"]
+            isOneToOne: false
+            referencedRelation: "device_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_key_envelopes_sender_device_key_id_fkey"
+            columns: ["sender_device_key_id"]
             isOneToOne: false
             referencedRelation: "device_keys"
             referencedColumns: ["id"]
@@ -718,10 +737,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_direct_conversation: {
-        Args: { other_user_id: string }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
       audit_action:

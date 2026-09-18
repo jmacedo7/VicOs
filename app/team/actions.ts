@@ -18,7 +18,7 @@ export async function inviteTeamMember(input: {
 
   const admin = createAdminClient();
   const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: name },
+    data: { full_name: name, vicos_company_id: membership.company_id, vicos_role: input.role },
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback?next=/dashboard`,
   });
 

@@ -95,7 +95,6 @@ export function DashboardNav({ active }: { active?: string }) {
             <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-900">João Macedo</p><p className="text-[11px] text-slate-500">Administrador</p></div>
             <span className="ml-auto h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,.08)]" />
           </div>
-        </div>
       </Link>
       </aside>
 

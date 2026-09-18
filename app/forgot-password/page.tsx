@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "");
     const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: \${window.location.origin}/auth/callback?next=/reset-password });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: ${window.location.origin}/auth/callback?next=/reset-password });
     if (error) setError("Não foi possível enviar o e-mail de recuperação.");
     else setMessage("Se esse e-mail estiver cadastrado, você receberá as instruções de recuperação.");
     setLoading(false);

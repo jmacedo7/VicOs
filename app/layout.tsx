@@ -7,5 +7,14 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR"><body>{children}</body></html>;
+  return (
+    <html lang="pt-BR">
+      <body>
+        {children}
+        <footer className="border-t border-slate-200 bg-white px-6 py-5 text-center text-xs text-slate-400">
+          © {new Date().getFullYear()} D7 Studio and João Macedo. Todos os direitos reservados.
+        </footer>
+      </body>
+    </html>
+  );
 }

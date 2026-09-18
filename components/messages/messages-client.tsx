@@ -7,7 +7,7 @@ import { createDirectConversation, markConversationRead, setPresence } from "@/a
 import { decryptMessage, encryptMessage, ensureDeviceKey, createConversationKey, unwrapConversationKey, wrapConversationKey } from "@/lib/crypto/chat";
 
 type User = { id:string; name:string; email:string; avatar_url:string|null; job_title:string|null; presence:string|null; last_seen_at:string|null };
-type Data = { userId:string; members:{conversation_id:string;user_id:string;last_read_at:string|null}[]; users:User[]; conversations:{id:string;created_at:string;last_message_at:string|null}[] };
+type Data = { userId:string; role:string; chatEnabled:boolean; chatAllowAttachments:boolean; members:{conversation_id:string;user_id:string;last_read_at:string|null}[]; users:User[]; conversations:{id:string;created_at:string;last_message_at:string|null}[] };
 
 function avatar(user: User | undefined) {
   if (user?.avatar_url) return <img src={user.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />;

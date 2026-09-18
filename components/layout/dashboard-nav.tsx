@@ -89,13 +89,14 @@ export function DashboardNav({ active }: { active?: string }) {
           <div className="space-y-1">{secondary.map((item) => <NavLink key={item[2]} item={item} active={active} />)}</div>
         </nav>
 
-        <div className="absolute bottom-5 left-4 right-4 rounded-2xl border border-white/80 bg-white/65 p-3 shadow-[0_10px_26px_rgba(15,23,42,.06)] backdrop-blur-lg">
+        <Link href="/profile" className="absolute bottom-5 left-4 right-4 rounded-2xl border border-white/80 bg-white/65 p-3 shadow-[0_10px_26px_rgba(15,23,42,.06)] backdrop-blur-lg">
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-900 text-[11px] font-bold text-white">JM</div>
             <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-900">João Macedo</p><p className="text-[11px] text-slate-500">Administrador</p></div>
             <span className="ml-auto h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,.08)]" />
           </div>
         </div>
+      </Link>
       </aside>
 
       <div className="fixed inset-x-0 top-0 z-40 flex h-[62px] items-center justify-between border-b border-slate-200/70 bg-white/72 px-4 backdrop-blur-xl lg:hidden">

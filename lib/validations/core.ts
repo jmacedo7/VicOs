@@ -1,7 +1,11 @@
 export function requiredText(value: unknown, field: string, max = 500) {
-  if (typeof value !== "string" || !value.trim()) throw new Error(\`\${field} is required\`);
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${field} is required`);
+  }
   const normalized = value.trim();
-  if (normalized.length > max) throw new Error(\`\${field} is too long\`);
+  if (normalized.length > max) {
+    throw new Error(`${field} is too long`);
+  }
   return normalized;
 }
 

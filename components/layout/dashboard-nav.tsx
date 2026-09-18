@@ -25,6 +25,7 @@ const mobileLinks: NavItem[] = [
   ["wallet", "Contas", "/accounts"],
   ["chart", "Financeiro", "/finance"],
   ["team", "Equipe", "/team"],
+  ["message", "Mensagens", "/messages"],
 ];
 
 function NavLink({ item, active }: { item: NavItem; active?: string }) {

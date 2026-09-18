@@ -106,9 +106,6 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="mx-auto max-w-[1440px] px-5 pb-7 pt-2 text-center text-[11px] text-slate-400 md:px-8 lg:px-10">
-        © 2026 D7 Studio and João Macedo. Todos os direitos reservados.
-      </footer>
     </main>
   );
 }

@@ -169,3 +169,13 @@ end;
 $$;
 drop trigger if exists messages_enforce_retention on public.messages;
 create trigger messages_enforce_retention after insert on public.messages for each row execute function private.enforce_chat_retention();
+
+-- Allow members to edit their own profile while preserving admin team management.
+drop policy if exists "users update by admin" on public.users;
+drop policy if exists "users update own profile" on public.users;
+create policy "users update profile or admin" on public.users for update to authenticated
+using (
+  id=(select auth.uid())
+  or (company_id in (select private.user_company_ids()) and private.current_user_role()='admin'::user_role)
+)
+with check (id=(select auth.uid()) or company_id in (select private.user_company_ids()));

@@ -84,6 +84,24 @@ export function MessagesClient({ initialData }: { initialData: Data }) {
     return new Promise<CryptoKey | undefined>((resolve,reject) => { const tx=db.transaction("keys","readonly"); const req=tx.objectStore("keys").get(`conversation:${id}`); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
   }
 
+  async function provisionMissingEnvelopes(conversationId: string, conversationKey: CryptoKey, recipientUserIds: string[]) {
+    if (!deviceRef.current) return;
+    const { data: keys } = await supabase.from("device_keys").select("id,user_id,public_key").in("user_id", recipientUserIds);
+    const { data: existing } = await supabase.from("conversation_key_envelopes").select("device_key_id").eq("conversation_id", conversationId);
+    const known = new Set((existing ?? []).map((row) => row.device_key_id));
+    const targets = (keys ?? []).filter((key) => !known.has(key.id));
+    for (const target of targets) {
+      const wrapped = await wrapConversationKey(conversationKey, deviceRef.current.privateKey, JSON.parse(target.public_key));
+      await supabase.from("conversation_key_envelopes").upsert({
+        conversation_id: conversationId,
+        device_key_id: target.id,
+        sender_device_key_id: deviceRef.current.id,
+        encrypted_key: wrapped.encryptedKey,
+        iv: wrapped.iv,
+      });
+    }
+  }
+
   async function loadConversation(id: string) {
     setSelected(id); setLoading(true); setMessages([]);
     try {

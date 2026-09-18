@@ -1,37 +1,79 @@
 import { getCurrentUserContext } from "@/lib/db/context";
 
-function monthStart() {
+function monthStart(offset = 0) {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1))
+    .toISOString()
+    .slice(0, 10);
+}
+
+function monthLabel(date: Date) {
+  return new Intl.DateTimeFormat("pt-BR", { month: "short" })
+    .format(date)
+    .replace(".", "")
+    .slice(0, 3);
 }
 
 export async function getDashboardMetrics() {
   const { supabase, membership } = await getCurrentUserContext();
-  const start = monthStart();
+  const start = monthStart(-5);
 
-  const [contacts, accounts, incomes, expenses, activity] = await Promise.all([
+  const [company, contacts, accounts, incomes, expenses, activity] = await Promise.all([
+    supabase.from("companies").select("name").eq("id", membership.company_id).single(),
     supabase.from("contacts").select("id", { count: "exact", head: true }),
     supabase.from("accounts").select("id", { count: "exact", head: true }),
-    supabase.from("incomes").select("amount").gte("date", start),
-    supabase.from("expenses").select("amount").gte("due_date", start),
-    supabase.from("audit_logs").select("id, action, entity_type, entity_id, metadata, created_at, user_id").order("created_at", { ascending: false }).limit(10),
+    supabase.from("incomes").select("amount, date").gte("date", start),
+    supabase.from("expenses").select("amount, due_date").gte("due_date", start),
+    supabase
+      .from("audit_logs")
+      .select("id, action, entity_type, entity_id, metadata, created_at, user_id")
+      .order("created_at", { ascending: false })
+      .limit(8),
   ]);
 
-  for (const result of [contacts, accounts, incomes, expenses, activity]) {
+  for (const result of [company, contacts, accounts, incomes, expenses, activity]) {
     if (result.error) throw new Error(result.error.message);
   }
 
-  const incomeTotal = (incomes.data ?? []).reduce((sum, row) => sum + Number(row.amount), 0);
-  const expenseTotal = (expenses.data ?? []).reduce((sum, row) => sum + Number(row.amount), 0);
+  const months = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (5 - index));
+    return {
+      key: `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`,
+      label: monthLabel(date),
+      income: 0,
+      expenses: 0,
+    };
+  });
+
+  const monthMap = new Map(months.map((month) => [month.key, month]));
+
+  for (const row of incomes.data ?? []) {
+    const key = row.date.slice(0, 7);
+    const month = monthMap.get(key);
+    if (month) month.income += Number(row.amount);
+  }
+
+  for (const row of expenses.data ?? []) {
+    const key = row.due_date.slice(0, 7);
+    const month = monthMap.get(key);
+    if (month) month.expenses += Number(row.amount);
+  }
+
+  const monthIncome = months[5]?.income ?? 0;
+  const monthExpenses = months[5]?.expenses ?? 0;
 
   return {
     companyId: membership.company_id,
+    companyName: company.data?.name ?? "Minha empresa",
+    userName: membership.name,
     role: membership.role,
     contacts: contacts.count ?? 0,
     accounts: accounts.count ?? 0,
-    monthIncome: incomeTotal,
-    monthExpenses: expenseTotal,
-    monthResult: incomeTotal - expenseTotal,
+    monthIncome,
+    monthExpenses,
+    monthResult: monthIncome - monthExpenses,
+    chart: months,
     recentActivity: activity.data ?? [],
   };
 }

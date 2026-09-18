@@ -138,13 +138,17 @@ export type Database = {
           business_segment: string | null
           city: string | null
           created_at: string | null
+          description: string | null
           document: string | null
           email: string | null
           id: string
+          industry: string | null
           logo_url: string | null
           name: string
           phone: string | null
           state: string | null
+          theme_primary: string | null
+          theme_secondary: string | null
           updated_at: string | null
         }
         Insert: {
@@ -152,13 +156,17 @@ export type Database = {
           business_segment?: string | null
           city?: string | null
           created_at?: string | null
+          description?: string | null
           document?: string | null
           email?: string | null
           id?: string
+          industry?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
           state?: string | null
+          theme_primary?: string | null
+          theme_secondary?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -166,13 +174,17 @@ export type Database = {
           business_segment?: string | null
           city?: string | null
           created_at?: string | null
+          description?: string | null
           document?: string | null
           email?: string | null
           id?: string
+          industry?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
           state?: string | null
+          theme_primary?: string | null
+          theme_secondary?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -259,6 +271,158 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_key_envelopes: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          device_key_id: string
+          encrypted_key: string
+          iv: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          device_key_id: string
+          encrypted_key: string
+          iv: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          device_key_id?: string
+          encrypted_key?: string
+          iv?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_key_envelopes_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_key_envelopes_device_key_id_fkey"
+            columns: ["device_key_id"]
+            isOneToOne: false
+            referencedRelation: "device_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_members: {
+        Row: {
+          conversation_id: string
+          joined_at: string
+          last_read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          joined_at?: string
+          last_read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          joined_at?: string
+          last_read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          last_message_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          last_message_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_message_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_keys: {
+        Row: {
+          algorithm: string
+          created_at: string
+          device_label: string | null
+          id: string
+          last_seen_at: string
+          public_key: string
+          user_id: string
+        }
+        Insert: {
+          algorithm?: string
+          created_at?: string
+          device_label?: string | null
+          id?: string
+          last_seen_at?: string
+          public_key: string
+          user_id: string
+        }
+        Update: {
+          algorithm?: string
+          created_at?: string
+          device_label?: string | null
+          id?: string
+          last_seen_at?: string
+          public_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -366,6 +530,57 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          ciphertext: string
+          conversation_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          iv: string
+          message_version: number
+          sender_id: string
+        }
+        Insert: {
+          ciphertext: string
+          conversation_id: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          iv: string
+          message_version?: number
+          sender_id: string
+        }
+        Update: {
+          ciphertext?: string
+          conversation_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          iv?: string
+          message_version?: number
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sync_logs: {
         Row: {
           company_id: string
@@ -447,29 +662,44 @@ export type Database = {
       }
       users: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
           company_id: string
           created_at: string | null
           email: string
           id: string
+          job_title: string | null
+          last_seen_at: string | null
           name: string
+          presence: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           company_id: string
           created_at?: string | null
           email: string
           id: string
+          job_title?: string | null
+          last_seen_at?: string | null
           name: string
+          presence?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           company_id?: string
           created_at?: string | null
           email?: string
           id?: string
+          job_title?: string | null
+          last_seen_at?: string | null
           name?: string
+          presence?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
         }
@@ -488,7 +718,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_direct_conversation: {
+        Args: { other_user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       audit_action:

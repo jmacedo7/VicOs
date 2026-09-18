@@ -1,11 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  --vicos-blue: #1687ff;
-  --vicos-navy: #07152d;
-  --vicos-bg: #f5f8fc;
+  --vicos-blue: #2563eb;
+  --vicos-blue-soft: #eff6ff;
+  --vicos-ink: #0f172a;
+  --vicos-muted: #64748b;
+  --vicos-bg: #f6f8fc;
+  --vicos-border: rgba(148, 163, 184, 0.22);
 }
 
 * { box-sizing: border-box; }
-html, body { min-height: 100%; }
-body { margin: 0; background: var(--vicos-bg); color: #0b1730; font-family: Arial, Helvetica, sans-serif; }
+html { min-height: 100%; }
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 85% 8%, rgba(37,99,235,.07), transparent 28rem),
+    var(--vicos-bg);
+  color: var(--vicos-ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+::selection { background: rgba(37,99,235,.18); }
+
+.vicos-glass {
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(255,255,255,.82);
+  box-shadow: 0 10px 35px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.8);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.vicos-card {
+  border: 1px solid var(--vicos-border);
+  background: rgba(255,255,255,.82);
+  box-shadow: 0 8px 28px rgba(15,23,42,.045);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.vicos-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(15,23,42,.08);
+  border-color: rgba(37,99,235,.18);
+}
+.vicos-orb {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #fff, #e9eef7);
+  border: 1px solid rgba(148,163,184,.25);
+  box-shadow: 5px 7px 14px rgba(15,23,42,.09), -4px -4px 10px rgba(255,255,255,.95);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vicos-float { animation: vicos-float 5s ease-in-out infinite; }
+  @keyframes vicos-float {
+    0%,100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-5px) rotate(1deg); }
+  }
+}

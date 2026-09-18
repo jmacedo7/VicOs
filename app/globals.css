@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+:root {
+  --vicos-blue: #1687ff;
+  --vicos-navy: #07152d;
+  --vicos-bg: #f5f8fc;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { margin: 0; background: var(--vicos-bg); color: #0b1730; font-family: Arial, Helvetica, sans-serif; }

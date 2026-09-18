@@ -15,25 +15,33 @@ export default function SignupPage() {
     setError("");
     setMessage("");
     setLoading(true);
+
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") ?? "");
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
     const supabase = createClient();
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name }, emailRedirectTo: ${window.location.origin}/auth/callback?next=/dashboard },
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+      },
     });
+
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
     }
+
     if (data.session) {
       window.location.href = "/dashboard";
       return;
     }
+
     setMessage("Conta criada. Confira seu e-mail para confirmar o acesso.");
     setLoading(false);
   }

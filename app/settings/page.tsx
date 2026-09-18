@@ -1,0 +1,6 @@
+import { DashboardNav } from "@/components/layout/dashboard-nav";
+import { PageHeader } from "@/components/layout/page-header";
+
+export default function SettingsPage() {
+  return <div className="flex min-h-screen bg-slate-50"><DashboardNav active="Configurações" /><main className="flex-1 px-6 py-8 lg:px-10"><PageHeader eyebrow="Sistema" title="Configurações" description="Ajuste preferências e informações importantes da sua conta VicOs." /><div className="grid gap-4 md:grid-cols-2"><section className="rounded-2xl border border-slate-200 bg-white p-6"><h2 className="text-lg font-bold">Conta</h2><p className="mt-2 text-sm text-slate-500">Gerencie seu perfil, e-mail e preferências de acesso.</p><button className="mt-5 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">Gerenciar conta</button></section><section className="rounded-2xl border border-slate-200 bg-white p-6"><h2 className="text-lg font-bold">Segurança</h2><p className="mt-2 text-sm text-slate-500">Configurações de autenticação e proteção da organização.</p><button className="mt-5 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">Ver opções de segurança</button></section></div></main></div>;
+}

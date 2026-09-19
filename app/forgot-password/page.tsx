@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { SITE_URL } from "@/lib/supabase/config";
 
 export default function ForgotPasswordPage() {
   const [message, setMessage] = useState("");
@@ -20,7 +21,7 @@ export default function ForgotPasswordPage() {
     const supabase = createClient();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      redirectTo: `${SITE_URL}/auth/callback?next=/reset-password`,
     });
 
     if (error) setError("Não foi possível enviar o e-mail de recuperação.");

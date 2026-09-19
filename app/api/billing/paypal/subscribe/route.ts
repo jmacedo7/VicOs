@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { createPaypalSubscription } from "@/lib/paypal/server";
 import { getCurrentUserContext } from "@/lib/db/context";
-import { getBillingContext, requireProFeature } from "@/lib/billing/entitlements";
+import { getBillingContext } from "@/lib/billing/entitlements";
 
 export async function POST(request: Request) {
   try {
-    await requireProFeature("advanced_sync");
     const { membership, user } = await getCurrentUserContext();
     const { supabase } = await getBillingContext();
     const { data: plan } = await supabase.from("plans").select("id,code,provider_plan_id").eq("code","pro").maybeSingle();

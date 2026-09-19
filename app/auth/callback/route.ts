@@ -1,14 +1,30 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/supabase/config";
 
+const OAUTH_NEXT_COOKIE = "vicos_oauth_next";
+
+function safeNext(value: string | null | undefined) {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const cookieStore = await cookies();
+  const cookieNext = cookieStore.get(OAUTH_NEXT_COOKIE)?.value;
+
+  let decodedCookieNext = "";
+  if (cookieNext) {
+    try {
+      decodedCookieNext = decodeURIComponent(cookieNext);
+    } catch {
+      decodedCookieNext = "";
+    }
+  }
+
   const code = searchParams.get("code");
-  const requestedNext = searchParams.get("next");
-  const next = requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")
-    ? requestedNext
-    : "/dashboard";
+  const next = safeNext(searchParams.get("next") ?? decodedCookieNext);
 
   if (code) {
     const supabase = await createClient();
@@ -19,12 +35,23 @@ export async function GET(request: Request) {
         ? await supabase.from("users").select("id").eq("id", user.id).maybeSingle()
         : { data: null };
 
-      if (!membership && next === "/dashboard") {
-        return NextResponse.redirect(`${SITE_URL}/onboarding`);
-      }
-      return NextResponse.redirect(`${SITE_URL}${next}`);
+      const response = NextResponse.redirect(
+        !membership && next === "/dashboard"
+          ? `${SITE_URL}/onboarding`
+          : `${SITE_URL}${next}`,
+      );
+      response.cookies.set(OAUTH_NEXT_COOKIE, "", {
+        path: "/",
+        maxAge: 0,
+      });
+      return response;
     }
   }
 
-  return NextResponse.redirect(`${SITE_URL}/login?error=auth_callback`);
+  const response = NextResponse.redirect(`${SITE_URL}/login?error=auth_callback`);
+  response.cookies.set(OAUTH_NEXT_COOKIE, "", {
+    path: "/",
+    maxAge: 0,
+  });
+  return response;
 }

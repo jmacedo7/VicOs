@@ -3,6 +3,7 @@ import { enqueueMutation, listMutations, removeMutation, updateMutation } from "
 import type { LocalMutation, SyncState } from "./types";
 
 let running = false;
+let cleanupEngine: (() => void) | null = null;
 let listeners = new Set<(state: SyncState) => void>();
 
 function emit(state: SyncState) {
@@ -73,6 +74,7 @@ export async function syncPendingMutations(): Promise<void> {
 
 export function startSyncEngine() {
   if (typeof window === "undefined") return () => undefined;
+  if (cleanupEngine) return cleanupEngine;
 
   const run = () => void syncPendingMutations();
   const onOnline = () => run();
@@ -81,10 +83,17 @@ export function startSyncEngine() {
   window.addEventListener("online", onOnline);
   run();
 
-  return () => {
+  cleanupEngine = () => {
     window.removeEventListener("online", onOnline);
     window.clearInterval(interval);
+    cleanupEngine = null;
   };
+
+  return cleanupEngine;
+}
+
+export function stopSyncEngine() {
+  cleanupEngine?.();
 }
 
 export async function queueMutation(

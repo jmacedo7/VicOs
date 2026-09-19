@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createDocument, updateDocument, archiveDocument, getDocumentVersions } from "@/app/documents/actions";
 import { Icon } from "@/components/ui/icons";
+import { useLocalFirst } from "@/lib/local-first/use-local-first";
 
-type Doc = { id:string; title:string; content:string; version:number; created_by:string; updated_by:string|null; created_at:string; updated_at:string };
+type Doc = { id:string; title:string; content:string; version:number; created_by:string; updated_by:string|null; created_at:string; updated_at:string; archived_at?:string|null };
 type User = { id:string; name:string };
 type Props = { initialData:{userId:string;role:string|null;documents:Doc[];users:User[]} };
 
 export function DocumentsClient({ initialData }: Props) {
-  const [documents,setDocuments]=useState<Doc[]>(initialData.documents);
+  const {data:documents,cacheUpsert,cacheRemove}=useLocalFirst<Doc>("documents","documents:list",initialData.documents);
   const [selectedId,setSelectedId]=useState<string|null>(initialData.documents[0]?.id ?? null);
   const [title,setTitle]=useState(initialData.documents[0]?.title ?? "Novo documento");
   const [content,setContent]=useState(initialData.documents[0]?.content ?? "");
@@ -18,42 +18,33 @@ export function DocumentsClient({ initialData }: Props) {
   const [history,setHistory]=useState<any[]>([]);
   const [status,setStatus]=useState("");
   const [saving,setSaving]=useState(false);
+  const lastSeenUpdatedAt=useRef<Record<string,string>>({});
   const canWrite=initialData.role!=="viewer";
   const selected=useMemo(()=>documents.find(d=>d.id===selectedId),[documents,selectedId]);
 
   useEffect(()=>{
-    const supabase=createClient();
-    const channel=supabase.channel("vicos-documents")
-      .on("postgres_changes",{event:"*",schema:"public",table:"documents"},payload=>{
-        const next=payload.new as Doc;
-        const old=payload.old as Doc;
-        if(payload.eventType==="INSERT") setDocuments(current=>current.some(d=>d.id===next.id)?current:[next,...current]);
-        if(payload.eventType==="UPDATE") {
-          setDocuments(current=>current.map(d=>d.id===next.id?next:d));
-          if(next.id===selectedId && next.updated_by!==initialData.userId) setStatus("Este documento foi atualizado por outro membro. Recarregue antes de editar.");
-        }
-        if(payload.eventType==="DELETE") setDocuments(current=>current.filter(d=>d.id!==old.id));
-      })
-      .subscribe();
-    return ()=>{void supabase.removeChannel(channel);};
-  },[initialData.userId,selectedId]);
+    if(!selected)return;
+    const previous=lastSeenUpdatedAt.current[selected.id];
+    if(previous&&previous!==selected.updated_at&&selected.updated_by&&selected.updated_by!==initialData.userId){
+      setStatus("Este documento foi atualizado por outro membro. Recarregue antes de editar.");
+    }
+    lastSeenUpdatedAt.current[selected.id]=selected.updated_at;
+  },[initialData.userId,selected?.id,selected?.updated_at,selected?.updated_by,selected]);
 
   useEffect(()=>{
     const doc=selected;
     if(!doc)return;
     setTitle(doc.title); setContent(doc.content); setVersion(doc.version); setStatus("");
-    void getDocumentVersions(doc.id).then(setHistory).catch(()=>setHistory([]));
+    void getDocumentVersions(doc.id).then(setHistory).catch(()=>setHistory([]);
   },[selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function select(id:string){
-    setSelectedId(id);
-  }
+  function select(id:string){ setSelectedId(id); }
 
   async function newDocument(){
     if(!canWrite)return;
     try{
       const created=await createDocument({title:"Documento sem título"});
-      setDocuments(current=>current.some(d=>d.id===created.id)?current:[created,...current]);
+      await cacheUpsert(created);
       setSelectedId(created.id);
     }catch(e){setStatus(e instanceof Error?e.message:"Não foi possível criar o documento.");}
   }
@@ -64,7 +55,7 @@ export function DocumentsClient({ initialData }: Props) {
     try{
       const saved=await updateDocument({id:selectedId,title,content,expectedVersion:version});
       setVersion(saved.version);
-      setDocuments(current=>current.map(d=>d.id===saved.id?saved:d));
+      await cacheUpsert(saved);
       const nextHistory=await getDocumentVersions(saved.id);
       setHistory(nextHistory);
       setStatus("Salvo agora.");
@@ -77,8 +68,13 @@ export function DocumentsClient({ initialData }: Props) {
 
   async function archive(){
     if(!selectedId||initialData.role==="viewer")return;
-    try{await archiveDocument(selectedId);setDocuments(current=>current.filter(d=>d.id!==selectedId));setSelectedId(documents.find(d=>d.id!==selectedId)?.id??null);setStatus("Documento arquivado.");}
-    catch(e){setStatus(e instanceof Error?e.message:"Não foi possível arquivar.");}
+    try{
+      await archiveDocument(selectedId);
+      await cacheRemove(selectedId);
+      const nextId=documents.find(d=>d.id!==selectedId)?.id??null;
+      setSelectedId(nextId);
+      setStatus("Documento arquivado.");
+    }catch(e){setStatus(e instanceof Error?e.message:"Não foi possível arquivar.");}
   }
 
   const currentVersion=history.find(item=>item.version===version);
@@ -91,7 +87,7 @@ export function DocumentsClient({ initialData }: Props) {
           <button onClick={newDocument} disabled={!canWrite} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 disabled:opacity-40" aria-label="Novo documento"><Icon name="plus" size={16}/></button>
         </div>
         <div className="mt-4 space-y-1.5">
-          {documents.map(doc=><button key={doc.id} onClick={()=>select(doc.id)} className={[`w-full rounded-2xl px-3 py-3 text-left transition`,selectedId===doc.id?"bg-blue-50 text-blue-800 ring-1 ring-blue-100":"hover:bg-slate-50 text-slate-700"].join(" ")}>
+          {documents.map(doc=><button key={doc.id} onClick={()=>select(doc.id)} className={"w-full rounded-2xl px-3 py-3 text-left transition "+(selectedId===doc.id?"bg-blue-50 text-blue-800 ring-1 ring-blue-100":"hover:bg-slate-50 text-slate-700")}>
             <p className="truncate text-sm font-bold">{doc.title}</p><p className="mt-1 text-[11px] text-slate-400">v{doc.version} · {new Date(doc.updated_at).toLocaleDateString("pt-BR")}</p>
           </button>)}
           {!documents.length&&<div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">Nenhum documento.</div>}

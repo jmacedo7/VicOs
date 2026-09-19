@@ -5,7 +5,7 @@ import { Icon, type IconName } from "@/components/ui/icons";
 type NavItem=[IconName,string,string];
 const links:NavItem[]=[
  ["grid","Dashboard","/dashboard"],["users","Contatos","/contacts"],["wallet","Contas","/accounts"],["chart","Financeiro","/finance"],
- ["team","Equipe","/team"],["task","Tarefas","/tasks"],["file","Documentos","/documents"],["sync","Sincronização","/synchronization"],["history","Histórico","/history"],["message","Mensagens","/messages"],["credit","Plano","/billing"],
+ ["team","Equipe","/team"],["task","Tarefas","/tasks"],["file","Documentos","/documents"],["sync","Sincronização","/synchronization"],["history","Histórico","/history"],["message","Mensagens","/messages"],["wallet","Plano","/billing"],
 ];
 const secondary:NavItem[]=[["building","Empresa","/company"],["settings","Configurações","/settings"]];
 const mobileLinks:NavItem[]=[["grid","Dashboard","/dashboard"],["users","Contatos","/contacts"],["task","Tarefas","/tasks"],["file","Documentos","/documents"],["message","Mensagens","/messages"],["credit","Plano","/billing"],["settings","Configurações","/settings"]];

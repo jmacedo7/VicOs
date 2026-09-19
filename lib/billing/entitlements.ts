@@ -16,7 +16,7 @@ export async function getBillingContext() {
   const { data: plan } = subscription?.plan_id
     ? await supabase
         .from("plans")
-        .select("id,code,name,price_cents,currency,interval,features,limits")
+        .select("id,code,name,description,price_cents,currency,interval,features,limits")
         .eq("id", subscription.plan_id)
         .maybeSingle()
     : { data: null };

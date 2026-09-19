@@ -1,6 +1,11 @@
 import { DashboardNav } from "@/components/layout/dashboard-nav";
 import { PageHeader } from "@/components/layout/page-header";
+import { ContactsClient } from "@/components/contacts/contacts-client";
+import { getCurrentUserContext } from "@/lib/db/context";
+import { listContacts } from "@/lib/services/contacts";
 
-export default function ContactsPage() {
-  return <div className="flex min-h-screen bg-slate-50"><DashboardNav active="Contatos" /><main className="vicos-mobile-main flex-1 px-5 py-7 md:px-8 lg:px-10 lg:py-9"><PageHeader eyebrow="Operações" title="Contatos" description="Centralize números, identifique status, organize tags e conecte cada contato às suas contas." action="Adicionar contato" href="/contacts/new" /><div className="mb-6 grid gap-4 sm:grid-cols-3"><div className="vicos-card rounded-[22px] p-5"><p className="text-sm text-slate-500">Total de contatos</p><p className="mt-2 text-2xl font-black">0</p></div><div className="vicos-card rounded-[22px] p-5"><p className="text-sm text-slate-500">Ativos</p><p className="mt-2 text-2xl font-black">0</p></div><div className="vicos-card rounded-[22px] p-5"><p className="text-sm text-slate-500">Bloqueados</p><p className="mt-2 text-2xl font-black">0</p></div></div><section className="vicos-card rounded-[22px] p-10 text-center"><div className="mx-auto max-w-md"><h2 className="text-xl font-bold">Sua base de contatos está vazia</h2><p className="mt-2 text-sm leading-6 text-slate-500">Adicione o primeiro contato para começar a organizar sua operação.</p><a href="/contacts/new" className="vicos-button mt-5">Adicionar primeiro contato</a></div></section></main></div>;
+export default async function ContactsPage() {
+  const { membership } = await getCurrentUserContext();
+  const { data } = await listContacts({ limit: 100 });
+  return <div className="flex min-h-screen bg-slate-50"><DashboardNav active="Contatos"/><main className="vicos-mobile-main flex-1 px-5 py-7 md:px-8 lg:px-10 lg:py-9"><PageHeader eyebrow="Operações" title="Contatos" description="Centralize números, identifique status, organize tags e conecte cada contato às suas contas." action="Adicionar contato" href="/contacts/new"/><ContactsClient companyId={membership.company_id} initialData={data}/></main></div>;
 }

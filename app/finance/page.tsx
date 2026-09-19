@@ -1,6 +1,11 @@
 import { DashboardNav } from "@/components/layout/dashboard-nav";
 import { PageHeader } from "@/components/layout/page-header";
+import { FinanceClient } from "@/components/finance/finance-client";
+import { getCurrentUserContext } from "@/lib/db/context";
+import { listFinance } from "@/lib/services/finance";
 
-export default function FinancePage() {
-  return <div className="flex min-h-screen bg-slate-50"><DashboardNav active="Financeiro" /><main className="vicos-mobile-main flex-1 px-5 py-7 md:px-8 lg:px-10 lg:py-9"><PageHeader eyebrow="Gestão" title="Financeiro" description="Acompanhe receitas, despesas, pagamentos e o resultado da empresa com clareza." action="Nova movimentação" href="/finance/new" /><div className="grid gap-4 md:grid-cols-3"><div className="vicos-card rounded-[22px] p-5"><p className="text-sm text-slate-500">Receitas</p><p className="mt-2 text-2xl font-black">R$ 0,00</p><span className="mt-1 block text-xs text-slate-400">Neste mês</span></div><div className="vicos-card rounded-[22px] p-5"><p className="text-sm text-slate-500">Despesas</p><p className="mt-2 text-2xl font-black">R$ 0,00</p><span className="mt-1 block text-xs text-slate-400">Neste mês</span></div><div className="rounded-[22px] border border-blue-100 bg-blue-50/75 shadow-sm backdrop-blur-sm p-5"><p className="text-sm text-blue-600">Resultado</p><p className="mt-2 text-2xl font-black text-slate-950">R$ 0,00</p><span className="mt-1 block text-xs text-slate-500">Receitas menos despesas</span></div></div><section className="mt-6 vicos-card rounded-[22px] p-10 text-center"><h2 className="text-xl font-bold">Nenhuma movimentação registrada</h2><p className="mt-2 text-sm text-slate-500">Cadastre sua primeira receita ou despesa para começar a acompanhar o financeiro.</p><a href="/finance/new" className="vicos-button mt-5">Registrar movimentação</a></section></main></div>;
+export default async function FinancePage() {
+  const { membership } = await getCurrentUserContext();
+  const data = await listFinance({ limit: 100 });
+  return <div className="flex min-h-screen bg-slate-50"><DashboardNav active="Financeiro"/><main className="vicos-mobile-main flex-1 px-5 py-7 md:px-8 lg:px-10 lg:py-9"><PageHeader eyebrow="Gestão" title="Financeiro" description="Acompanhe receitas, despesas, pagamentos e o resultado da empresa com clareza." action="Nova movimentação" href="/finance/new"/><FinanceClient companyId={membership.company_id} initialIncomes={data.incomes} initialExpenses={data.expenses}/></main></div>;
 }

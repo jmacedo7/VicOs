@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const PRODUCTION_AUTH_CALLBACK = "https://vicos.vercel.app/auth/callback";
+const OAUTH_NEXT_COOKIE = "vicos_oauth_next";
 
 function safeNext() {
   const next = new URLSearchParams(window.location.search).get("next");
@@ -18,13 +19,21 @@ export function GoogleButton() {
     setLoading(true);
     setError("");
     const supabase = createClient();
+    const next = safeNext();
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+
+    document.cookie =
+      `${OAUTH_NEXT_COOKIE}=${encodeURIComponent(next)}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${PRODUCTION_AUTH_CALLBACK}?next=${encodeURIComponent(safeNext())}`,
+        redirectTo: PRODUCTION_AUTH_CALLBACK,
       },
     });
     if (error) {
+      document.cookie =
+        `${OAUTH_NEXT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
       setError("Não foi possível iniciar o Google agora.");
       setLoading(false);
     }

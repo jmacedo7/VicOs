@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getCurrentUserContext } from "@/lib/db/context";
 import { buildAuthorizationUrl, isEmailProvider } from "@/lib/services/email-oauth";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
 
 export async function GET(request: Request, { params }: { params: Promise<{ provider: string }> }) {
   const { provider } = await params;
@@ -24,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
     try {
       return NextResponse.redirect(buildAuthorizationUrl(provider, state));
     } catch (error) {
-      const url = new URL("/synchronization", request.url);
+      const url = new URL(`${CANONICAL_SITE_URL}/synchronization`);
       url.searchParams.set(
         "email",
         error instanceof Error && error.message === "EMAIL_PROVIDER_NOT_CONFIGURED"
@@ -34,7 +35,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
       return NextResponse.redirect(url);
     }
   } catch (error) {
-    const url = new URL("/login", request.url);
+    const url = new URL(`${CANONICAL_SITE_URL}/login`);
     url.searchParams.set("next", `/api/integrations/${provider}/start`);
     if (error instanceof Error && error.message === "COMPANY_CONTEXT_NOT_FOUND") {
       url.searchParams.set("error", "company_context");

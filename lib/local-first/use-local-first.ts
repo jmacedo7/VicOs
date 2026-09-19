@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { readCache, writeCache } from "./db";
 import { subscribeCacheChanges } from "./cache-events";
@@ -11,6 +11,7 @@ type Row = Record<string, unknown>;
 export function useLocalFirst<T extends Row>(table: string, cacheKey: string, initialData: T[] = []) {
   const [data, setData] = useState<T[]>(initialData);
   const [loading, setLoading] = useState(true);
+  const initialRef = useRef(initialData);
 
   const hydrateFromCache = useCallback(async () => {
     const local = await readCache<T[]>(cacheKey);
@@ -19,93 +20,67 @@ export function useLocalFirst<T extends Row>(table: string, cacheKey: string, in
       setLoading(false);
       return true;
     }
-
-    if (initialData.length) {
-      setData(initialData);
-      await writeCache(cacheKey, table, initialData);
+    if (initialRef.current.length) {
+      setData(initialRef.current);
+      await writeCache(cacheKey, table, initialRef.current);
+      setLoading(false);
+      return true;
     }
-
     return false;
-  }, [cacheKey, initialData, table]);
+  }, [cacheKey, table]);
 
   const refresh = useCallback(async () => {
-    await hydrateFromCache();
-
-    const supabase = createClient();
-    const { data: remote, error } = await supabase.from(table).select("*");
-
-    if (!error && remote) {
-      const rows = remote as T[];
-      setData(rows);
-      await writeCache(cacheKey, table, rows);
+    const hydrated = await hydrateFromCache();
+    if (!hydrated) {
+      const supabase = createClient();
+      const { data: remote, error } = await supabase.from(table).select("*");
+      if (!error && remote) {
+        const rows = remote as T[];
+        setData(rows);
+        await writeCache(cacheKey, table, rows);
+      }
     }
-
     setLoading(false);
   }, [cacheKey, hydrateFromCache, table]);
 
   useEffect(() => {
     void refresh();
-
-    return subscribeCacheChanges(cacheKey, () => {
-      void hydrateFromCache();
-    });
+    return subscribeCacheChanges(cacheKey, () => { void hydrateFromCache(); });
   }, [cacheKey, hydrateFromCache, refresh]);
 
-  const cacheUpsert = useCallback(
-    async (row: T) => {
-      setData((current) => {
-        const id = row.id;
-        if (!id) return [...current, row];
-
-        const exists = current.some((item) => item.id === id);
-        return exists
-          ? current.map((item) => (item.id === id ? { ...item, ...row } : item))
-          : [...current, row];
-      });
-
-      const optimistic = await readCache<T[]>(cacheKey);
-      const next = optimistic ?? data;
+  const cacheUpsert = useCallback(async (row: T) => {
+    setData(current => {
       const id = row.id;
-      const updated = id
-        ? next.some((item) => item.id === id)
-          ? next.map((item) => (item.id === id ? { ...item, ...row } : item))
-          : [...next, row]
-        : [...next, row];
+      if (!id) return [...current, row];
+      const exists = current.some(item => item.id === id);
+      return exists ? current.map(item => item.id === id ? { ...item, ...row } : item) : [...current, row];
+    });
+    const optimistic = await readCache<T[]>(cacheKey);
+    const next = optimistic ?? data;
+    const id = row.id;
+    const updated = id
+      ? next.some(item => item.id === id)
+        ? next.map(item => item.id === id ? { ...item, ...row } : item)
+        : [...next, row]
+      : [...next, row];
+    await writeCache(cacheKey, table, updated);
+  }, [cacheKey, data, table]);
 
-      await writeCache(cacheKey, table, updated);
-    },
-    [cacheKey, data, table]
-  );
+  const cacheRemove = useCallback(async (id: string) => {
+    setData(current => current.filter(item => item.id !== id));
+    const optimistic = await readCache<T[]>(cacheKey);
+    await writeCache(cacheKey, table, (optimistic ?? data).filter(item => item.id !== id));
+  }, [cacheKey, data, table]);
 
-  const cacheRemove = useCallback(
-    async (id: string) => {
-      setData((current) => current.filter((item) => item.id !== id));
+  const upsert = useCallback(async (row: T) => {
+    await cacheUpsert(row);
+    await queueMutation({ table, operation: "upsert", payload: row });
+  }, [cacheUpsert, table]);
 
-      const optimistic = await readCache<T[]>(cacheKey);
-      await writeCache(
-        cacheKey,
-        table,
-        (optimistic ?? data).filter((item) => item.id !== id)
-      );
-    },
-    [cacheKey, data, table]
-  );
-
-  const upsert = useCallback(
-    async (row: T) => {
-      await cacheUpsert(row);
-      await queueMutation({ table, operation: "upsert", payload: row });
-    },
-    [cacheUpsert, table]
-  );
-
-  const remove = useCallback(
-    async (id: string) => {
-      await cacheRemove(id);
-      await queueMutation({ table, operation: "delete", payload: { id } });
-    },
-    [cacheRemove, table]
-  );
+  const remove = useCallback(async (id: string) => {
+    await cacheRemove(id);
+    await queueMutation({ table, operation: "delete", payload: { id } });
+  }, [cacheRemove, table]);
 
   return { data, loading, refresh, upsert, remove, cacheUpsert, cacheRemove };
 }

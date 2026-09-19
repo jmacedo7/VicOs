@@ -41,7 +41,7 @@ export function MessagesClient({ initialData }: { initialData: Data }) {
   }, [data.userId, supabase]);
 
   async function provisionInitialConversation(conversationId: string, recipient: User) {
-    if (!deviceRef.current) return null;
+    if (!deviceRef.current) return undefined;
 
     const { data: conversation } = await supabase
       .from("conversations")

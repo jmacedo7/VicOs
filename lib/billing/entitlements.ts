@@ -9,10 +9,18 @@ export async function getBillingContext() {
   const { supabase, membership } = await getCurrentUserContext();
   const { data: subscription } = await supabase
     .from("subscriptions")
-    .select("id,status,current_period_end,plan:plans(code,name,price_cents,currency,interval,features,limits)")
+    .select("id,plan_id,status,current_period_end")
     .eq("company_id", membership.company_id)
     .maybeSingle();
-  const plan = Array.isArray(subscription?.plan) ? subscription.plan[0] : subscription?.plan;
+
+  const { data: plan } = subscription?.plan_id
+    ? await supabase
+        .from("plans")
+        .select("id,code,name,price_cents,currency,interval,features,limits")
+        .eq("id", subscription.plan_id)
+        .maybeSingle()
+    : { data: null };
+
   return { supabase, membership, subscription, plan };
 }
 

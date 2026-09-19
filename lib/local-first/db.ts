@@ -1,7 +1,7 @@
 import type { LocalMutation } from "./types";
 
 const DB_NAME = "vicos-local";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const CACHE_STORE = "cache";
 const MUTATION_STORE = "mutations";
 
@@ -25,9 +25,20 @@ function openDatabase(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(CACHE_STORE)) {
         db.createObjectStore(CACHE_STORE, { keyPath: "key" });
       }
+
       if (!db.objectStoreNames.contains(MUTATION_STORE)) {
         const store = db.createObjectStore(MUTATION_STORE, { keyPath: "id" });
         store.createIndex("createdAt", "createdAt");
+        store.createIndex("nextAttemptAt", "nextAttemptAt");
+        store.createIndex("status", "status");
+      } else {
+        const store = request.transaction?.objectStore(MUTATION_STORE);
+        if (store && !store.indexNames.contains("nextAttemptAt")) {
+          store.createIndex("nextAttemptAt", "nextAttemptAt");
+        }
+        if (store && !store.indexNames.contains("status")) {
+          store.createIndex("status", "status");
+        }
       }
     };
 
@@ -39,7 +50,7 @@ function openDatabase(): Promise<IDBDatabase> {
 async function transaction<T>(
   storeName: string,
   mode: IDBTransactionMode,
-  callback: (store: IDBObjectStore) => IDBRequest | IDBRequest[] | T
+  callback: (store: IDBObjectStore) => IDBRequest | T
 ): Promise<T> {
   const db = await openDatabase();
 
@@ -104,7 +115,8 @@ export async function enqueueMutation(mutation: LocalMutation): Promise<void> {
 
 export async function listMutations(): Promise<LocalMutation[]> {
   try {
-    return await transaction<LocalMutation[]>(MUTATION_STORE, "readonly", (store) => store.getAll());
+    const mutations = await transaction<LocalMutation[]>(MUTATION_STORE, "readonly", (store) => store.getAll());
+    return mutations.sort((a, b) => a.createdAt - b.createdAt);
   } catch {
     return [];
   }
@@ -118,12 +130,6 @@ export async function updateMutation(mutation: LocalMutation): Promise<void> {
   await transaction(MUTATION_STORE, "readwrite", (store) => store.put(mutation));
 }
 
-/**
- * Removes every VicOs local-first record from this browser.
- *
- * This is intentionally a full database deletion rather than a store-by-store
- * cleanup so future object stores are also removed from a signed-out browser.
- */
 export async function clearLocalFirstData(): Promise<void> {
   if (typeof window === "undefined" || !("indexedDB" in window)) return;
 
@@ -131,11 +137,7 @@ export async function clearLocalFirstData(): Promise<void> {
     const request = indexedDB.deleteDatabase(DB_NAME);
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error ?? new Error("Could not clear local database"));
-    request.onblocked = () => {
-      // Existing connections will close as soon as their transactions finish.
-      // The cleanup remains best-effort and must not block logout forever.
-      resolve();
-    };
+    request.onblocked = () => resolve();
   }).catch(() => {
     // Local cleanup must never prevent Supabase logout.
   });

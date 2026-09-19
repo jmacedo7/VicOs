@@ -1,11 +1,12 @@
+import { notifyCacheChange } from "./cache-events";
 import type { LocalMutation } from "./types";
 
 const DB_NAME = "vicos-local";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const CACHE_STORE = "cache";
 const MUTATION_STORE = "mutations";
 
-type CacheRecord = {
+export type CacheRecord = {
   key: string;
   table: string;
   value: unknown;
@@ -22,8 +23,15 @@ function openDatabase(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const db = request.result;
+
       if (!db.objectStoreNames.contains(CACHE_STORE)) {
-        db.createObjectStore(CACHE_STORE, { keyPath: "key" });
+        const store = db.createObjectStore(CACHE_STORE, { keyPath: "key" });
+        store.createIndex("table", "table");
+      } else {
+        const store = request.transaction?.objectStore(CACHE_STORE);
+        if (store && !store.indexNames.contains("table")) {
+          store.createIndex("table", "table");
+        }
       }
 
       if (!db.objectStoreNames.contains(MUTATION_STORE)) {
@@ -99,11 +107,23 @@ export async function readCache<T>(key: string): Promise<T | null> {
   }
 }
 
+export async function listCachesByTable(table: string): Promise<CacheRecord[]> {
+  try {
+    return await transaction<CacheRecord[]>(CACHE_STORE, "readonly", (store) => {
+      const index = store.index("table");
+      return index.getAll(IDBKeyRange.only(table));
+    });
+  } catch {
+    return [];
+  }
+}
+
 export async function writeCache<T>(key: string, table: string, value: T): Promise<void> {
   try {
     await transaction(CACHE_STORE, "readwrite", (store) =>
       store.put({ key, table, value, updatedAt: Date.now() } satisfies CacheRecord)
     );
+    notifyCacheChange(key);
   } catch {
     // Local cache must never break the primary application flow.
   }

@@ -1013,6 +1013,7 @@ export type Database = {
           limits: Json
           name: string
           price_cents: number
+          provider_plan_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1027,6 +1028,7 @@ export type Database = {
           limits?: Json
           name: string
           price_cents?: number
+          provider_plan_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1041,6 +1043,7 @@ export type Database = {
           limits?: Json
           name?: string
           price_cents?: number
+          provider_plan_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1056,6 +1059,7 @@ export type Database = {
           plan_id: string
           provider: string | null
           provider_customer_id: string | null
+          provider_plan_id: string | null
           provider_subscription_id: string | null
           status: string
           updated_at: string
@@ -1070,6 +1074,7 @@ export type Database = {
           plan_id: string
           provider?: string | null
           provider_customer_id?: string | null
+          provider_plan_id?: string | null
           provider_subscription_id?: string | null
           status?: string
           updated_at?: string
@@ -1084,6 +1089,7 @@ export type Database = {
           plan_id?: string
           provider?: string | null
           provider_customer_id?: string | null
+          provider_plan_id?: string | null
           provider_subscription_id?: string | null
           status?: string
           updated_at?: string

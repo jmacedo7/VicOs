@@ -113,6 +113,25 @@ function reconcileArray(table: string, current: CacheRow[], eventType: RealtimeE
   return next;
 }
 
+function cacheContainsRemoteScope(value: unknown, remote: CacheRow) {
+  const remoteCompanyId = typeof remote.company_id === "string" ? remote.company_id : null;
+  if (!remoteCompanyId) return true;
+
+  if (Array.isArray(value)) {
+    const rows = value as CacheRow[];
+    if (!rows.length) return false;
+    const scoped = rows.find((row) => typeof row.company_id === "string");
+    return !scoped || scoped.company_id === remoteCompanyId;
+  }
+
+  if (value && typeof value === "object") {
+    const current = value as CacheRow;
+    return typeof current.company_id !== "string" || current.company_id === remoteCompanyId;
+  }
+
+  return false;
+}
+
 function reconcileValue(
   table: string,
   value: unknown,
@@ -157,6 +176,7 @@ async function reconcilePayload(payload: RealtimePayload) {
 
   const caches = await listCachesByTable(payload.table);
   for (const cache of caches) {
+    if (!cacheContainsRemoteScope(cache.value, remote)) continue;
     const next = reconcileValue(payload.table, cache.value, payload.eventType, remote);
 
     if (next === cache.value) continue;

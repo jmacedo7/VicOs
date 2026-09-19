@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { SITE_URL } from "@/lib/supabase/config";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
+
+const OAUTH_NEXT_COOKIE = "vicos_oauth_next";
 
 export default function ForgotPasswordPage() {
   const [message, setMessage] = useState("");
@@ -18,14 +20,22 @@ export default function ForgotPasswordPage() {
 
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "");
-    const supabase = createClient();
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie =
+      `${OAUTH_NEXT_COOKIE}=${encodeURIComponent("/reset-password")}; Path=/; Max-Age=600; SameSite=Lax${secure}`;
 
+    const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${SITE_URL}/auth/callback?next=/reset-password`,
+      redirectTo: `${CANONICAL_SITE_URL}/auth/callback`,
     });
 
-    if (error) setError("Não foi possível enviar o e-mail de recuperação.");
-    else setMessage("Se esse e-mail estiver cadastrado, você receberá as instruções de recuperação.");
+    if (error) {
+      document.cookie =
+        `${OAUTH_NEXT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
+      setError("Não foi possível enviar o e-mail de recuperação.");
+    } else {
+      setMessage("Se esse e-mail estiver cadastrado, você receberá as instruções de recuperação.");
+    }
     setLoading(false);
   }
 

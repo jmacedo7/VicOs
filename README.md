@@ -4,7 +4,7 @@
 
 One company. One system.
 
-**Produção:** https://vic-os-6kvx-8of9i90kk-d7-studio.vercel.app
+**Produção:** https://vicos.vercel.app
 
 O VicOs é um SaaS multiempresa para centralizar operação, contatos, contas, financeiro, equipe, documentos, tarefas, sincronização, histórico e comunicação em um único ambiente.
 
@@ -40,13 +40,19 @@ Use `.env.example`. Para OAuth de e-mail, configure:
 `NEXT_PUBLIC_SITE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` e `EMAIL_TOKEN_ENCRYPTION_KEY`.
 
 ## Redirects OAuth
-Cadastre no Google Cloud:
-`https://SEU-DOMINIO/api/integrations/google/callback`
+Para login social do VicOs, configure o callback:
+`https://vicos.vercel.app/auth/callback`
 
-Cadastre no Microsoft Entra:
-`https://SEU-DOMINIO/api/integrations/microsoft/callback`
+No Google Cloud, o **Authorized redirect URI** deve continuar sendo o callback do Supabase:
+`https://muzopxphnxzxszkgpxoq.supabase.co/auth/v1/callback`
 
-O fluxo usa Authorization Code + `state` em cookie HttpOnly para proteção CSRF.
+No Google Cloud para o fluxo de Gmail/Google Workspace, cadastre:
+`https://vicos.vercel.app/api/integrations/google/callback`
+
+No Microsoft Entra, cadastre:
+`https://vicos.vercel.app/api/integrations/microsoft/callback`
+
+O login social do VicOs usa Supabase Auth + Authorization Code/PKCE e o callback final permanece no domínio canônico.
 
 ## Deploy
 1. Configure o projeto Vercel ligado ao repositório.

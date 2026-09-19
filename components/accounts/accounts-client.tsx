@@ -9,7 +9,7 @@ type Account={id:string;company_id:string;platform:string;external_id:string;dis
 type Props={companyId:string;initialData:Account[]};
 
 export function AccountsClient({companyId,initialData}:Props){
- const {data,upsert,remove}=useLocalFirst<Account>("accounts","accounts:list",initialData);
+ const {data,upsert,remove}=useLocalFirst<Account>("accounts",`accounts:list:${companyId}`,initialData);
  const [search,setSearch]=useState(""); const [platform,setPlatform]=useState(""); const [externalId,setExternalId]=useState(""); const [busy,setBusy]=useState(false);
  const visible=useMemo(()=>data.filter(x=>{const q=search.trim().toLowerCase();return !q||x.platform.toLowerCase().includes(q)||x.external_id.toLowerCase().includes(q)||(x.display_name||"").toLowerCase().includes(q)||(x.username||"").toLowerCase().includes(q)}),[data,search]);
  async function add(){if(!platform.trim()||!externalId.trim()||busy)return;setBusy(true);const now=new Date().toISOString();try{await upsert({id:crypto.randomUUID(),company_id:companyId,platform:platform.trim(),external_id:externalId.trim(),display_name:null,username:null,status:"active",notes:null,created_at:now,updated_at:now});setPlatform("");setExternalId("")}finally{setBusy(false)}}

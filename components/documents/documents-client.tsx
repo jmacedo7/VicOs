@@ -10,7 +10,7 @@ type User = { id:string; name:string };
 type Props = { initialData:{userId:string;role:string|null;documents:Doc[];users:User[]} };
 
 export function DocumentsClient({ initialData }: Props) {
-  const {data:documents,cacheUpsert,cacheRemove}=useLocalFirst<Doc>("documents","documents:list",initialData.documents);
+  const {data:documents,cacheUpsert,cacheRemove}=useLocalFirst<Doc>("documents",`documents:list:${initialData.userId}`,initialData.documents);
   const [selectedId,setSelectedId]=useState<string|null>(initialData.documents[0]?.id ?? null);
   const [title,setTitle]=useState(initialData.documents[0]?.title ?? "Novo documento");
   const [content,setContent]=useState(initialData.documents[0]?.content ?? "");

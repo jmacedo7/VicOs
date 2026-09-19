@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
+import { CANONICAL_SITE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 
 const protectedPaths = [
   "/dashboard",
@@ -52,8 +52,7 @@ export async function proxy(request: NextRequest) {
   );
 
   if (isProtected && !hasUser) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    const url = new URL("/login", CANONICAL_SITE_URL);
     url.searchParams.set("next", path);
     return NextResponse.redirect(url);
   }

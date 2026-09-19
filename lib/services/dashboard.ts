@@ -2,33 +2,25 @@ import { getCurrentUserContext } from "@/lib/db/context";
 
 function monthStart(offset = 0) {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1))
-    .toISOString()
-    .slice(0, 10);
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1)).toISOString().slice(0, 10);
 }
 
 function monthLabel(date: Date) {
-  return new Intl.DateTimeFormat("pt-BR", { month: "short" })
-    .format(date)
-    .replace(".", "")
-    .slice(0, 3);
+  return new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(date).replace(".", "").slice(0, 3);
 }
 
 export async function getDashboardMetrics() {
   const { supabase, membership } = await getCurrentUserContext();
   const start = monthStart(-5);
+  const companyId = membership.company_id;
 
   const [company, contacts, accounts, incomes, expenses, activity] = await Promise.all([
-    supabase.from("companies").select("name").eq("id", membership.company_id).single(),
-    supabase.from("contacts").select("id", { count: "exact", head: true }),
-    supabase.from("accounts").select("id", { count: "exact", head: true }),
-    supabase.from("incomes").select("amount, date").gte("date", start),
-    supabase.from("expenses").select("amount, due_date").gte("due_date", start),
-    supabase
-      .from("audit_logs")
-      .select("id, action, entity_type, entity_id, metadata, created_at, user_id")
-      .order("created_at", { ascending: false })
-      .limit(8),
+    supabase.from("companies").select("name").eq("id", companyId).single(),
+    supabase.from("contacts").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabase.from("accounts").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabase.from("incomes").select("amount, date").eq("company_id", companyId).gte("date", start),
+    supabase.from("expenses").select("amount, due_date").eq("company_id", companyId).gte("due_date", start),
+    supabase.from("audit_logs").select("id, action, entity_type, entity_id, metadata, created_at, user_id").eq("company_id", companyId).order("created_at", { ascending: false }).limit(8),
   ]);
 
   for (const result of [company, contacts, accounts, incomes, expenses, activity]) {
@@ -45,18 +37,14 @@ export async function getDashboardMetrics() {
       expenses: 0,
     };
   });
-
   const monthMap = new Map(months.map((month) => [month.key, month]));
 
   for (const row of incomes.data ?? []) {
-    const key = row.date.slice(0, 7);
-    const month = monthMap.get(key);
+    const month = monthMap.get(row.date.slice(0, 7));
     if (month) month.income += Number(row.amount);
   }
-
   for (const row of expenses.data ?? []) {
-    const key = row.due_date.slice(0, 7);
-    const month = monthMap.get(key);
+    const month = monthMap.get(row.due_date.slice(0, 7));
     if (month) month.expenses += Number(row.amount);
   }
 
@@ -64,7 +52,7 @@ export async function getDashboardMetrics() {
   const monthExpenses = months[5]?.expenses ?? 0;
 
   return {
-    companyId: membership.company_id,
+    companyId,
     companyName: company.data?.name ?? "Minha empresa",
     userName: membership.name,
     role: membership.role,

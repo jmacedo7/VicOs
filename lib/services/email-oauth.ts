@@ -41,8 +41,10 @@ export function providerConfig(provider: EmailProvider) {
 export function buildAuthorizationUrl(provider: EmailProvider, state: string) {
   const config = providerConfig(provider);
   if (!config.clientId || !config.clientSecret) throw new Error("EMAIL_PROVIDER_NOT_CONFIGURED");
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
   const params = new URLSearchParams({
-    client_id: config.clientId,
+    client_id: clientId,
     redirect_uri: callbackUrl(provider),
     response_type: "code",
     response_mode: "query",
@@ -59,9 +61,11 @@ export function buildAuthorizationUrl(provider: EmailProvider, state: string) {
 export async function exchangeCode(provider: EmailProvider, code: string) {
   const config = providerConfig(provider);
   if (!config.clientId || !config.clientSecret) throw new Error("EMAIL_PROVIDER_NOT_CONFIGURED");
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
   const body = new URLSearchParams({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
+    client_id: clientId,
+    client_secret: clientSecret,
     code,
     redirect_uri: callbackUrl(provider),
     grant_type: "authorization_code",

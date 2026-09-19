@@ -22,6 +22,7 @@ create table if not exists public.subscriptions (
   provider text,
   provider_customer_id text,
   provider_subscription_id text,
+  provider_plan_id text,
   status text not null default 'trialing' check (status in ('trialing','active','past_due','canceled','incomplete','paused')),
   current_period_start timestamptz,
   current_period_end timestamptz,

@@ -2,10 +2,12 @@ import { DashboardNav } from "@/components/layout/dashboard-nav";
 import { PageHeader } from "@/components/layout/page-header";
 import { getBillingContext } from "@/lib/billing/entitlements";
 import { ApiKeyManager } from "@/components/billing/api-key-manager";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function BillingPage() {
-  const { supabase, membership, subscription, plan } = await getBillingContext();
-  const { data: keys } = await supabase.from("api_keys").select("id,name,prefix,scopes,expires_at,last_used_at,revoked_at").eq("company_id",membership.company_id).order("created_at",{ascending:false});
+  const { membership, subscription, plan } = await getBillingContext();
+  const admin = createAdminClient();
+  const { data: keys } = await admin.from("api_keys").select("id,name,prefix,scopes,expires_at,last_used_at,revoked_at").eq("company_id",membership.company_id).order("created_at",{ascending:false});
   const isPro = plan?.code === "pro" && ["active","trialing"].includes(subscription?.status ?? "");
   return <div className="flex min-h-screen"><DashboardNav active="Configurações"/><main className="vicos-mobile-main flex-1 px-5 py-7 md:px-8 lg:px-10 lg:py-9"><PageHeader eyebrow="Conta e plano" title="Plano e integrações" description="Gerencie o plano da empresa, recursos liberados e chaves de integração."/>
     <div className="grid gap-4 md:grid-cols-2">

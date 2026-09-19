@@ -117,3 +117,26 @@ export async function removeMutation(id: string): Promise<void> {
 export async function updateMutation(mutation: LocalMutation): Promise<void> {
   await transaction(MUTATION_STORE, "readwrite", (store) => store.put(mutation));
 }
+
+/**
+ * Removes every VicOs local-first record from this browser.
+ *
+ * This is intentionally a full database deletion rather than a store-by-store
+ * cleanup so future object stores are also removed from a signed-out browser.
+ */
+export async function clearLocalFirstData(): Promise<void> {
+  if (typeof window === "undefined" || !("indexedDB" in window)) return;
+
+  await new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(DB_NAME);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error ?? new Error("Could not clear local database"));
+    request.onblocked = () => {
+      // Existing connections will close as soon as their transactions finish.
+      // The cleanup remains best-effort and must not block logout forever.
+      resolve();
+    };
+  }).catch(() => {
+    // Local cleanup must never prevent Supabase logout.
+  });
+}

@@ -20,7 +20,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
     });
     return NextResponse.redirect(buildAuthorizationUrl(provider, state));
   } catch (error) {
-    const url = new URL("/synchronization", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+    const url = new URL("/synchronization", process.env.NEXT_PUBLIC_SITE_URL || "https://vic-os-d7-studio.vercel.app");
     url.searchParams.set("email", error instanceof Error && error.message === "EMAIL_PROVIDER_NOT_CONFIGURED" ? "missing_config" : "error");
     return NextResponse.redirect(url);
   }

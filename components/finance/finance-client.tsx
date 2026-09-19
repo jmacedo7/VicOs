@@ -10,8 +10,8 @@ type Expense={id:string;company_id:string;description:string;amount:number;categ
 type Props={companyId:string;initialIncomes:Income[];initialExpenses:Expense[]};
 
 export function FinanceClient({companyId,initialIncomes,initialExpenses}:Props){
- const {data:incomes,upsert:upsertIncome,remove:removeIncome}=useLocalFirst<Income>("incomes","finance:incomes",initialIncomes);
- const {data:expenses,upsert:upsertExpense,remove:removeExpense}=useLocalFirst<Expense>("expenses","finance:expenses",initialExpenses);
+ const {data:incomes,upsert:upsertIncome,remove:removeIncome}=useLocalFirst<Income>("incomes",`finance:incomes:${companyId}`,initialIncomes);
+ const {data:expenses,upsert:upsertExpense,remove:removeExpense}=useLocalFirst<Expense>("expenses",`finance:expenses:${companyId}`,initialExpenses);
  const [description,setDescription]=useState(""); const [amount,setAmount]=useState(""); const [kind,setKind]=useState<"income"|"expense">("income"); const [busy,setBusy]=useState(false);
  const totalIn=useMemo(()=>incomes.reduce((s,x)=>s+Number(x.amount||0),0),[incomes]); const totalOut=useMemo(()=>expenses.reduce((s,x)=>s+Number(x.amount||0),0),[expenses]);
  const money=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});

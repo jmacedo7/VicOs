@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/supabase/config";
+
 export type EmailProvider = "google" | "microsoft";
 
 export const emailProviderLabel: Record<EmailProvider, string> = {
@@ -9,12 +11,8 @@ export function isEmailProvider(value: string): value is EmailProvider {
   return value === "google" || value === "microsoft";
 }
 
-function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://vicos.vercel.app").replace(/\/$/, "");
-}
-
 export function callbackUrl(provider: EmailProvider) {
-  return `${siteUrl()}/api/integrations/${provider}/callback`;
+  return `${SITE_URL}/api/integrations/${provider}/callback`;
 }
 
 export function providerConfig(provider: EmailProvider) {

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { SITE_URL } from "@/lib/supabase/config";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
 
 const OAUTH_NEXT_COOKIE = "vicos_oauth_next";
 
@@ -37,8 +37,8 @@ export async function GET(request: Request) {
 
       const response = NextResponse.redirect(
         !membership && next === "/dashboard"
-          ? `${SITE_URL}/onboarding`
-          : `${SITE_URL}${next}`,
+          ? `${CANONICAL_SITE_URL}/onboarding`
+          : `${CANONICAL_SITE_URL}${next}`,
       );
       response.cookies.set(OAUTH_NEXT_COOKIE, "", {
         path: "/",
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     }
   }
 
-  const response = NextResponse.redirect(`${SITE_URL}/login?error=auth_callback`);
+  const response = NextResponse.redirect(`${CANONICAL_SITE_URL}/login?error=auth_callback`);
   response.cookies.set(OAUTH_NEXT_COOKIE, "", {
     path: "/",
     maxAge: 0,

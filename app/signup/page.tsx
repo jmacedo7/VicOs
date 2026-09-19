@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { GoogleButton } from "@/components/auth/google-button";
 import { createClient } from "@/lib/supabase/client";
-import { SITE_URL } from "@/lib/supabase/config";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
 
 export default function SignupPage() {
   const [error, setError] = useState("");
@@ -28,7 +28,7 @@ export default function SignupPage() {
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${CANONICAL_SITE_URL}/auth/callback`,
       },
     });
 

@@ -4,21 +4,28 @@ import { useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { clearLocalFirstData } from "@/lib/local-first/db";
 import { startSyncEngine, stopSyncEngine } from "@/lib/local-first/sync-engine";
+import { startRealtimeReconciler, stopRealtimeReconciler } from "@/lib/local-first/realtime-reconciler";
 
 export function LocalFirstSyncProvider() {
   useEffect(() => {
     const supabase = createClient();
     let cleanupSync: (() => void) | null = null;
+    let cleanupRealtime: (() => void) | null = null;
 
     const start = () => {
       cleanupSync?.();
+      cleanupRealtime?.();
       cleanupSync = startSyncEngine();
+      cleanupRealtime = startRealtimeReconciler();
     };
 
     const stopAndClear = () => {
       cleanupSync?.();
+      cleanupRealtime?.();
       cleanupSync = null;
+      cleanupRealtime = null;
       stopSyncEngine();
+      stopRealtimeReconciler();
       void clearLocalFirstData();
     };
 
@@ -47,7 +54,9 @@ export function LocalFirstSyncProvider() {
     return () => {
       authSubscription.subscription.unsubscribe();
       cleanupSync?.();
+      cleanupRealtime?.();
       cleanupSync = null;
+      cleanupRealtime = null;
     };
   }, []);
 

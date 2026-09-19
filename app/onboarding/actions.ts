@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SITE_URL } from "@/lib/supabase/config";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
 
 function errorCode(error: { message?: string } | null) {
   return String(error?.message ?? "").replace(/^.*?: /, "");
@@ -36,5 +36,5 @@ export async function createInvite(formData: FormData) {
   if (error) throw new Error(errorCode(error));
   const token = data?.token;
   if (!token) throw new Error("INVITE_CREATE_FAILED");
-  redirect(`${SITE_URL}/join/${token}`);
+  redirect(`${CANONICAL_SITE_URL}/join/${token}`);
 }

@@ -10,7 +10,7 @@ type User={id:string;name:string;role:string|null};
 type Props={initialData:{userId:string;role:string|null;tasks:Task[];users:User[]}};
 
 export function TasksClient({initialData}:Props){
-  const {data:tasks,cacheUpsert,cacheRemove}=useLocalFirst<Task>("tasks","tasks:list",initialData.tasks);
+  const {data:tasks,cacheUpsert,cacheRemove}=useLocalFirst<Task>("tasks",`tasks:list:${initialData.userId}`,initialData.tasks);
   const [title,setTitle]=useState("");
   const [priority,setPriority]=useState("normal");
   const [assignee,setAssignee]=useState("");

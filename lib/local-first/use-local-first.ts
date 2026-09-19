@@ -8,8 +8,8 @@ import { queueMutation } from "./sync-engine";
 
 type Row = Record<string, unknown>;
 
-export function useLocalFirst<T extends Row>(table: string, cacheKey: string) {
-  const [data, setData] = useState<T[]>([]);
+export function useLocalFirst<T extends Row>(table: string, cacheKey: string, initialData: T[] = []) {
+  const [data, setData] = useState<T[]>(initialData);
   const [loading, setLoading] = useState(true);
 
   const hydrateFromCache = useCallback(async () => {
@@ -17,8 +17,16 @@ export function useLocalFirst<T extends Row>(table: string, cacheKey: string) {
     if (local) {
       setData(local);
       setLoading(false);
+      return true;
     }
-  }, [cacheKey]);
+
+    if (initialData.length) {
+      setData(initialData);
+      await writeCache(cacheKey, table, initialData);
+    }
+
+    return false;
+  }, [cacheKey, initialData, table]);
 
   const refresh = useCallback(async () => {
     await hydrateFromCache();
@@ -43,7 +51,7 @@ export function useLocalFirst<T extends Row>(table: string, cacheKey: string) {
     });
   }, [cacheKey, hydrateFromCache, refresh]);
 
-  const upsert = useCallback(
+  const cacheUpsert = useCallback(
     async (row: T) => {
       setData((current) => {
         const id = row.id;
@@ -65,12 +73,11 @@ export function useLocalFirst<T extends Row>(table: string, cacheKey: string) {
         : [...next, row];
 
       await writeCache(cacheKey, table, updated);
-      await queueMutation({ table, operation: "upsert", payload: row });
     },
     [cacheKey, data, table]
   );
 
-  const remove = useCallback(
+  const cacheRemove = useCallback(
     async (id: string) => {
       setData((current) => current.filter((item) => item.id !== id));
 
@@ -80,10 +87,25 @@ export function useLocalFirst<T extends Row>(table: string, cacheKey: string) {
         table,
         (optimistic ?? data).filter((item) => item.id !== id)
       );
-      await queueMutation({ table, operation: "delete", payload: { id } });
     },
     [cacheKey, data, table]
   );
 
-  return { data, loading, refresh, upsert, remove };
+  const upsert = useCallback(
+    async (row: T) => {
+      await cacheUpsert(row);
+      await queueMutation({ table, operation: "upsert", payload: row });
+    },
+    [cacheUpsert, table]
+  );
+
+  const remove = useCallback(
+    async (id: string) => {
+      await cacheRemove(id);
+      await queueMutation({ table, operation: "delete", payload: { id } });
+    },
+    [cacheRemove, table]
+  );
+
+  return { data, loading, refresh, upsert, remove, cacheUpsert, cacheRemove };
 }

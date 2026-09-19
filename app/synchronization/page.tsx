@@ -26,14 +26,12 @@ export default async function SynchronizationPage({
   const googleConfigured = Boolean(
     process.env.GOOGLE_CLIENT_ID &&
       process.env.GOOGLE_CLIENT_SECRET &&
-      process.env.EMAIL_TOKEN_ENCRYPTION_KEY &&
-      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.EMAIL_TOKEN_ENCRYPTION_KEY,
   );
   const microsoftConfigured = Boolean(
     process.env.MICROSOFT_CLIENT_ID &&
       process.env.MICROSOFT_CLIENT_SECRET &&
-      process.env.EMAIL_TOKEN_ENCRYPTION_KEY &&
-      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.EMAIL_TOKEN_ENCRYPTION_KEY,
   );
 
   const query = await searchParams;

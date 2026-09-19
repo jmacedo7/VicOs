@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { GoogleButton } from "@/components/auth/google-button";
 import { createClient } from "@/lib/supabase/client";
+import { SITE_URL } from "@/lib/supabase/config";
 
 export default function SignupPage() {
   const [error, setError] = useState("");
@@ -27,7 +28,7 @@ export default function SignupPage() {
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
       },
     });
 
@@ -38,7 +39,7 @@ export default function SignupPage() {
     }
 
     if (data.session) {
-      window.location.href = "/dashboard";
+      window.location.href = "/onboarding";
       return;
     }
 

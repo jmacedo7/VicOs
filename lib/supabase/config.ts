@@ -1,11 +1,14 @@
 const FALLBACK_SUPABASE_URL = "https://muzopxphnxzxszkgpxoq.supabase.co";
 const FALLBACK_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_lMWr67CDqsDdcAJp3N6khw_iHt83Mvo";
-export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+
+export const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+
 export const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 
 export const SITE_URL =
-  (process.env.NEXT_PUBLIC_SITE_URL || "https://vic-os-d7-studio.vercel.app").replace(/\/$/, "");
+  (process.env.NEXT_PUBLIC_SITE_URL || "https://vicos.vercel.app").replace(/\/$/, "");
 
 export function assertSupabaseConfig() {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {

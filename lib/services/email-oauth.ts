@@ -10,7 +10,7 @@ export function isEmailProvider(value: string): value is EmailProvider {
 }
 
 function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://vic-os-d7-studio.vercel.app").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://vicos.vercel.app").replace(/\/$/, "");
 }
 
 export function callbackUrl(provider: EmailProvider) {

@@ -8,7 +8,7 @@ const links:NavItem[]=[
  ["team","Equipe","/team"],["task","Tarefas","/tasks"],["file","Documentos","/documents"],["sync","Sincronização","/synchronization"],["history","Histórico","/history"],["message","Mensagens","/messages"],["wallet","Plano","/billing"],
 ];
 const secondary:NavItem[]=[["building","Empresa","/company"],["settings","Configurações","/settings"]];
-const mobileLinks:NavItem[]=[["grid","Dashboard","/dashboard"],["users","Contatos","/contacts"],["task","Tarefas","/tasks"],["file","Documentos","/documents"],["message","Mensagens","/messages"],["credit","Plano","/billing"],["settings","Configurações","/settings"]];
+const mobileLinks:NavItem[]=[["grid","Dashboard","/dashboard"],["users","Contatos","/contacts"],["task","Tarefas","/tasks"],["file","Documentos","/documents"],["message","Mensagens","/messages"],["wallet","Plano","/billing"],["settings","Configurações","/settings"]];
 const roleLabels:Record<string,string>={admin:"Administrador",manager:"Gerente",operator:"Operador",viewer:"Visualizador"};
 
 function NavLink({item,active}:{item:NavItem;active?:string}){const [icon,label,href]=item;const selected=active===label;return <Link href={href} className={["group flex items-center gap-3 rounded-[13px] px-3 py-2.5 text-sm font-semibold transition-all duration-200",selected?"bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100/80":"text-slate-600 hover:bg-white/80 hover:text-slate-950"].join(" ")}><span className={["grid h-8 w-8 shrink-0 place-items-center rounded-[10px] transition-all duration-200",selected?"bg-white text-blue-600 shadow-sm":"bg-slate-100/70 text-slate-500 group-hover:bg-white group-hover:text-slate-700"].join(" ")}><Icon name={icon} size={16}/></span><span className="truncate">{label}</span></Link>;}

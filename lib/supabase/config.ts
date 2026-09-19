@@ -1,5 +1,5 @@
 const FALLBACK_SUPABASE_URL = "https://muzopxphnxzxszkgpxoq.supabase.co";
-const FALLBACK_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_lMWr67CDqsDdcBApAJ3N6khw_iHt83Mvo";
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_lMWr67CDqsDdcAJp3N6khw_iHt83Mvo";
 export const CANONICAL_SITE_URL = "https://vicos.vercel.app";
 
 export const SUPABASE_URL =

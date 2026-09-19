@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createPaypalSubscription } from "@/lib/paypal/server";
 import { getCurrentUserContext } from "@/lib/db/context";
 import { getBillingContext } from "@/lib/billing/entitlements";
-import { SITE_URL } from "@/lib/supabase/config";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
 
 export async function POST(request: Request) {
   try {
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
 
     const subscription = await createPaypalSubscription(
       plan.provider_plan_id,
-      SITE_URL + "/billing?paypal=success",
-      SITE_URL + "/billing?paypal=cancel",
+      CANONICAL_SITE_URL + "/billing?paypal=success",
+      CANONICAL_SITE_URL + "/billing?paypal=cancel",
       membership.company_id + ":" + user.id,
     );
 

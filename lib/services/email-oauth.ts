@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/lib/supabase/config";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
 
 export type EmailProvider = "google" | "microsoft";
 
@@ -12,7 +12,7 @@ export function isEmailProvider(value: string): value is EmailProvider {
 }
 
 export function callbackUrl(provider: EmailProvider) {
-  return `${SITE_URL}/api/integrations/${provider}/callback`;
+  return `${CANONICAL_SITE_URL}/api/integrations/${provider}/callback`;
 }
 
 export function providerConfig(provider: EmailProvider) {

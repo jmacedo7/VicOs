@@ -40,28 +40,61 @@ export function MessagesClient({ initialData }: { initialData: Data }) {
     return () => { clearInterval(timer); setPresence("offline").catch(() => undefined); };
   }, [data.userId, supabase]);
 
-  async function provisionConversation(conversationId: string, recipient: User) {
-    if (!deviceRef.current) return;
-    const { data: existing } = await supabase.from("conversation_key_envelopes").select("encrypted_key,iv,device_key_id,sender_device_key_id").eq("conversation_id", conversationId).eq("device_key_id", deviceRef.current.id).maybeSingle();
-    if (existing) return;
-    const { data: keys } = await supabase.from("device_keys").select("id,user_id,public_key").in("user_id", [data.userId, recipient.id]);
+  async function provisionInitialConversation(conversationId: string, recipient: User) {
+    if (!deviceRef.current) return null;
+
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("created_by")
+      .eq("id", conversationId)
+      .single();
+
+    const { data: envelopes } = await supabase
+      .from("conversation_key_envelopes")
+      .select("device_key_id")
+      .eq("conversation_id", conversationId)
+      .limit(1);
+
+    if (envelopes?.length) {
+      throw new Error("A chave desta conversa foi criada em outro dispositivo. Abra o VicOs no dispositivo que iniciou a conversa para disponibilizá-la aqui.");
+    }
+
+    if (conversation?.created_by !== data.userId) {
+      throw new Error("A conversa ainda não foi inicializada pelo dispositivo que a criou.");
+    }
+
+    const { data: keys } = await supabase
+      .from("device_keys")
+      .select("id,user_id,public_key")
+      .in("user_id", [data.userId, recipient.id]);
+
     if (!keys?.length) throw new Error("Chaves do dispositivo ainda não estão disponíveis.");
+
     const senderKey = keys.find((k) => k.id === deviceRef.current.id);
     const recipientKeys = keys.filter((k) => k.user_id === recipient.id);
-    if (!senderKey || !recipientKeys.length) throw new Error("O outro membro ainda não abriu o VicOs neste dispositivo.");
+    if (!senderKey) throw new Error("A chave deste dispositivo ainda não está disponível.");
+
     const conversationKey = await createConversationKey();
+
     for (const target of [senderKey, ...recipientKeys]) {
-      const wrapped = await wrapConversationKey(conversationKey, deviceRef.current.privateKey, JSON.parse(target.public_key));
-      await supabase.from("conversation_key_envelopes").upsert({
+      const wrapped = await wrapConversationKey(
+        conversationKey,
+        deviceRef.current.privateKey,
+        JSON.parse(target.public_key),
+      );
+      const { error } = await supabase.from("conversation_key_envelopes").upsert({
         conversation_id: conversationId,
         device_key_id: target.id,
         sender_device_key_id: deviceRef.current.id,
         encrypted_key: wrapped.encryptedKey,
         iv: wrapped.iv,
       });
+      if (error) throw error;
     }
+
     keyRef.current = conversationKey;
     await storeConversationKey(conversationId, conversationKey);
+    return conversationKey;
   }
 
   async function storeConversationKey(id: string, key: CryptoKey) {
@@ -104,6 +137,7 @@ export function MessagesClient({ initialData }: { initialData: Data }) {
 
   async function loadConversation(id: string) {
     setSelected(id); setLoading(true); setMessages([]);
+    keyRef.current = null;
     try {
       let key = await getStoredConversationKey(id);
       const { data: envelope } = await supabase.from("conversation_key_envelopes").select("encrypted_key,iv,sender_device_key_id").eq("conversation_id",id).eq("device_key_id",deviceRef.current?.id ?? "").maybeSingle();
@@ -113,10 +147,18 @@ export function MessagesClient({ initialData }: { initialData: Data }) {
         if (key) await storeConversationKey(id,key);
       }
       const recipient = conversationOther(id);
-      if (!key && recipient) await provisionConversation(id,recipient);
-      key = keyRef.current ?? key ?? null;
-      keyRef.current = key;
+      if (!key && recipient) {
+        key = await provisionInitialConversation(id, recipient);
+      }
       if (!key) throw new Error("Esta conversa ainda não possui uma chave disponível neste dispositivo.");
+
+      keyRef.current = key;
+
+      const memberUserIds = data.members
+        .filter((member) => member.conversation_id === id && member.user_id !== data.userId)
+        .map((member) => member.user_id);
+
+      await provisionMissingEnvelopes(id, key, memberUserIds);
       const { data: rows, error } = await supabase.from("messages").select("id,sender_id,ciphertext,iv,created_at,deleted_at").eq("conversation_id",id).order("created_at");
       if (error) throw error;
       const decrypted = await Promise.all((rows ?? []).map(async (row) => ({...row,text:row.deleted_at ? "Mensagem apagada" : await decryptMessage(key!,row.ciphertext,row.iv)})));

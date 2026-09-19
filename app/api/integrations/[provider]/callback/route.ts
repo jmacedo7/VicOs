@@ -23,6 +23,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
 
   try {
     const { user, membership, supabase } = await getCurrentUserContext();
+    const { hasFeature } = await import("@/lib/billing/entitlements");
+    if (!(await hasFeature("email_integration"))) return NextResponse.redirect(new URL("/synchronization?email=pro_required", url.origin));
     const tokens = await exchangeCode(provider, code);
     const identity = await fetchEmailIdentity(provider, tokens.access_token);
     const { data: existing } = await supabase

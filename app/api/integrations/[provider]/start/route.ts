@@ -8,6 +8,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
   const { provider } = await params;
   if (!isEmailProvider(provider)) return new NextResponse("Not found", { status: 404 });
   await getCurrentUserContext();
+
   try {
     const state = crypto.randomBytes(24).toString("base64url");
     const cookieStore = await cookies();
@@ -20,7 +21,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
     });
     return NextResponse.redirect(buildAuthorizationUrl(provider, state));
   } catch (error) {
-    const url = new URL("/synchronization", process.env.NEXT_PUBLIC_SITE_URL || "https://vic-os-d7-studio.vercel.app");
+    const url = new URL("/synchronization", process.env.NEXT_PUBLIC_SITE_URL || "https://vicos.vercel.app");
     url.searchParams.set("email", error instanceof Error && error.message === "EMAIL_PROVIDER_NOT_CONFIGURED" ? "missing_config" : "error");
     return NextResponse.redirect(url);
   }

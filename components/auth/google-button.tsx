@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { SITE_URL } from "@/lib/supabase/config";
+
+const PRODUCTION_AUTH_CALLBACK = "https://vicos.vercel.app/auth/callback";
 
 function safeNext() {
   const next = new URLSearchParams(window.location.search).get("next");
@@ -19,7 +20,9 @@ export function GoogleButton() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(safeNext())}` },
+      options: {
+        redirectTo: `${PRODUCTION_AUTH_CALLBACK}?next=${encodeURIComponent(safeNext())}`,
+      },
     });
     if (error) {
       setError("Não foi possível iniciar o Google agora.");

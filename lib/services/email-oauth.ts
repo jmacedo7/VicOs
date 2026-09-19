@@ -10,9 +10,7 @@ export function isEmailProvider(value: string): value is EmailProvider {
 }
 
 function siteUrl() {
-  const value = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!value) throw new Error("NEXT_PUBLIC_SITE_URL is not configured");
-  return value.replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://vic-os-d7-studio.vercel.app").replace(/\/$/, "");
 }
 
 export function callbackUrl(provider: EmailProvider) {
@@ -41,10 +39,8 @@ export function providerConfig(provider: EmailProvider) {
 export function buildAuthorizationUrl(provider: EmailProvider, state: string) {
   const config = providerConfig(provider);
   if (!config.clientId || !config.clientSecret) throw new Error("EMAIL_PROVIDER_NOT_CONFIGURED");
-  const clientId = config.clientId;
-  const clientSecret = config.clientSecret;
   const params = new URLSearchParams({
-    client_id: clientId,
+    client_id: config.clientId,
     redirect_uri: callbackUrl(provider),
     response_type: "code",
     response_mode: "query",
@@ -68,18 +64,30 @@ export type EmailOAuthTokens = {
 export async function exchangeCode(provider: EmailProvider, code: string): Promise<EmailOAuthTokens> {
   const config = providerConfig(provider);
   if (!config.clientId || !config.clientSecret) throw new Error("EMAIL_PROVIDER_NOT_CONFIGURED");
-  const clientId = config.clientId;
-  const clientSecret = config.clientSecret;
   const body = new URLSearchParams({
-    client_id: clientId,
-    client_secret: clientSecret,
+    client_id: config.clientId,
+    client_secret: config.clientSecret,
     code,
     redirect_uri: callbackUrl(provider),
     grant_type: "authorization_code",
   });
-  const response = await fetch(config.token, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, cache: "no-store" });
-  const data = await response.json() as { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string; error?: string; error_description?: string; };
-  if (!response.ok || !data.access_token) throw new Error(data.error_description || data.error || "EMAIL_OAUTH_TOKEN_ERROR");
+  const response = await fetch(config.token, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+    cache: "no-store",
+  });
+  const data = await response.json() as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    scope?: string;
+    error?: string;
+    error_description?: string;
+  };
+  if (!response.ok || !data.access_token) {
+    throw new Error(data.error_description || data.error || "EMAIL_OAUTH_TOKEN_ERROR");
+  }
   return {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
@@ -92,8 +100,15 @@ export async function fetchEmailIdentity(provider: EmailProvider, accessToken: s
   const endpoint = provider === "google"
     ? "https://openidconnect.googleapis.com/v1/userinfo"
     : "https://graph.microsoft.com/v1.0/me?$select=mail,userPrincipalName,displayName";
-  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" });
-  const data = await response.json() as { email?: string; mail?: string | null; userPrincipalName?: string; };
+  const response = await fetch(endpoint, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  const data = await response.json() as {
+    email?: string;
+    mail?: string | null;
+    userPrincipalName?: string;
+  };
   if (!response.ok) throw new Error("EMAIL_IDENTITY_LOOKUP_FAILED");
   const email = provider === "google" ? data.email : (data.mail || data.userPrincipalName);
   if (!email) throw new Error("EMAIL_ADDRESS_NOT_FOUND");

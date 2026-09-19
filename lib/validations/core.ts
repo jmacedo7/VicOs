@@ -1,11 +1,17 @@
+export const recordStatuses = ["active","inactive","blocked","pending"] as const;
+export type RecordStatus = (typeof recordStatuses)[number];
+
+export function recordStatus(value: unknown): RecordStatus {
+  if (typeof value !== "string" || !recordStatuses.includes(value as RecordStatus)) {
+    throw new Error("Invalid status");
+  }
+  return value as RecordStatus;
+}
+
 export function requiredText(value: unknown, field: string, max = 500) {
-  if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`${field} is required`);
-  }
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${field} is required`);
   const normalized = value.trim();
-  if (normalized.length > max) {
-    throw new Error(`${field} is too long`);
-  }
+  if (normalized.length > max) throw new Error(`${field} is too long`);
   return normalized;
 }
 
@@ -25,6 +31,6 @@ export function normalizePhone(value: string) {
 
 export function positiveAmount(value: unknown) {
   const amount = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(amount) || amount < 0) throw new Error("Invalid amount");
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid amount");
   return Math.round(amount * 100) / 100;
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserContext } from "@/lib/db/context";
 import { requiredText } from "@/lib/validations/core";
+import { SITE_URL } from "@/lib/supabase/config";
 
 const roles = ["admin", "manager", "operator", "viewer"] as const;
 type TeamRole = (typeof roles)[number];
@@ -33,7 +34,7 @@ export async function inviteTeamMember(input: {
         vicos_company_id: membership.company_id,
         vicos_role: role,
       },
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://vicos.vercel.app"}/auth/callback?next=/dashboard`,
+      redirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
     });
 
   if (inviteError) throw new Error(inviteError.message);

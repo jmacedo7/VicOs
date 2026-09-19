@@ -161,6 +161,9 @@ export async function POST(request: Request) {
   }
 
   const resource = event.resource ?? {};
+  if (!inserted) {
+    return NextResponse.json({ error: "PAYMENT_EVENT_STORE_FAILED" }, { status: 500 });
+  }
   const subscriptionProviderId = getSubscriptionId(resource);
 
   const { data: subscription } = subscriptionProviderId
@@ -219,6 +222,10 @@ export async function POST(request: Request) {
       resource.billing_info && typeof resource.billing_info === "object"
         ? (resource.billing_info as Record<string, unknown>)
         : {};
+    const lastPayment =
+      billingInfo.last_payment && typeof billingInfo.last_payment === "object"
+        ? (billingInfo.last_payment as Record<string, unknown>)
+        : {};
 
     await admin
       .from("subscriptions")
@@ -227,7 +234,7 @@ export async function POST(request: Request) {
         provider_plan_id: providerPlanId,
         status: status ?? "active",
         current_period_start:
-          toIso(billingInfo.last_payment?.time) ??
+          toIso(lastPayment.time) ??
           toIso(resource.start_time),
         current_period_end: toIso(billingInfo.next_billing_time),
         cancel_at_period_end:

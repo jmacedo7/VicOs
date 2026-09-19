@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getCurrentUserContext } from "@/lib/db/context";
+import { CANONICAL_SITE_URL } from "@/lib/supabase/config";
 import { encryptSecret } from "@/lib/crypto/server";
 import { exchangeCode, fetchEmailIdentity, isEmailProvider } from "@/lib/services/email-oauth";
 
@@ -11,20 +12,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  if (!code || !state) return NextResponse.redirect(new URL("/synchronization?email=invalid_callback", url.origin));
+  if (!code || !state) return NextResponse.redirect(`${CANONICAL_SITE_URL}/synchronization?email=invalid_callback`);
 
   const cookieStore = await cookies();
   const cookieName = `vicos_email_oauth_${provider}`;
   const expectedState = cookieStore.get(cookieName)?.value;
   cookieStore.delete(cookieName);
   if (!expectedState || expectedState !== state) {
-    return NextResponse.redirect(new URL("/synchronization?email=invalid_state", url.origin));
+    return NextResponse.redirect(`${CANONICAL_SITE_URL}/synchronization?email=invalid_state`);
   }
 
   try {
     const { user, membership, supabase } = await getCurrentUserContext();
     const { hasFeature } = await import("@/lib/billing/entitlements");
-    if (!(await hasFeature("email_integration"))) return NextResponse.redirect(new URL("/synchronization?email=pro_required", url.origin));
+    if (!(await hasFeature("email_integration"))) return NextResponse.redirect(`${CANONICAL_SITE_URL}/synchronization?email=pro_required`);
     const tokens = await exchangeCode(provider, code);
     const identity = await fetchEmailIdentity(provider, tokens.access_token);
     const { data: existing } = await supabase
@@ -48,8 +49,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
     }, { onConflict: "user_id,provider,email" });
 
     if (error) throw new Error(error.message);
-    return NextResponse.redirect(new URL("/synchronization?email=connected", url.origin));
+    return NextResponse.redirect(`${CANONICAL_SITE_URL}/synchronization?email=connected`);
   } catch {
-    return NextResponse.redirect(new URL("/synchronization?email=error", url.origin));
+    return NextResponse.redirect(`${CANONICAL_SITE_URL}/synchronization?email=error`);
   }
 }

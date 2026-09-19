@@ -58,7 +58,14 @@ export function buildAuthorizationUrl(provider: EmailProvider, state: string) {
   return `${config.authorization}?${params.toString()}`;
 }
 
-export async function exchangeCode(provider: EmailProvider, code: string) {
+export type EmailOAuthTokens = {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  scope?: string;
+};
+
+export async function exchangeCode(provider: EmailProvider, code: string): Promise<EmailOAuthTokens> {
   const config = providerConfig(provider);
   if (!config.clientId || !config.clientSecret) throw new Error("EMAIL_PROVIDER_NOT_CONFIGURED");
   const clientId = config.clientId;
@@ -73,7 +80,12 @@ export async function exchangeCode(provider: EmailProvider, code: string) {
   const response = await fetch(config.token, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, cache: "no-store" });
   const data = await response.json() as { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string; error?: string; error_description?: string; };
   if (!response.ok || !data.access_token) throw new Error(data.error_description || data.error || "EMAIL_OAUTH_TOKEN_ERROR");
-  return data;
+  return {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_in: data.expires_in,
+    scope: data.scope,
+  };
 }
 
 export async function fetchEmailIdentity(provider: EmailProvider, accessToken: string) {

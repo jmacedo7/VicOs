@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useMemo, useState } from "react";
 import { createTask, updateTask, deleteTask } from "@/app/tasks/actions";
 import { Icon } from "@/components/ui/icons";
+import { useLocalFirst } from "@/lib/local-first/use-local-first";
 
 type Task={id:string;title:string;description:string|null;status:string;priority:string;due_date:string|null;assignee_id:string|null;created_by:string;created_at:string;updated_at:string;completed_at:string|null};
 type User={id:string;name:string;role:string|null};
 type Props={initialData:{userId:string;role:string|null;tasks:Task[];users:User[]}};
 
 export function TasksClient({initialData}:Props){
-  const [tasks,setTasks]=useState<Task[]>(initialData.tasks);
+  const {data:tasks,cacheUpsert,cacheRemove}=useLocalFirst<Task>("tasks","tasks:list",initialData.tasks);
   const [title,setTitle]=useState("");
   const [priority,setPriority]=useState("normal");
   const [assignee,setAssignee]=useState("");
@@ -19,22 +19,11 @@ export function TasksClient({initialData}:Props){
   const [status,setStatus]=useState("");
   const canWrite=initialData.role!=="viewer";
 
-  useEffect(()=>{
-    const supabase=createClient();
-    const channel=supabase.channel("vicos-tasks").on("postgres_changes",{event:"*",schema:"public",table:"tasks"},payload=>{
-      const next=payload.new as Task; const old=payload.old as Task;
-      if(payload.eventType==="INSERT")setTasks(cur=>cur.some(t=>t.id===next.id)?cur:[next,...cur]);
-      if(payload.eventType==="UPDATE")setTasks(cur=>cur.map(t=>t.id===next.id?next:t));
-      if(payload.eventType==="DELETE")setTasks(cur=>cur.filter(t=>t.id!==old.id));
-    }).subscribe();
-    return ()=>{void supabase.removeChannel(channel);};
-  },[]);
-
   async function add(){
     if(!title.trim()||!canWrite)return;
     try{
       const created=await createTask({title,priority,dueDate:dueDate||undefined,assigneeId:assignee||null});
-      setTasks(cur=>cur.some(t=>t.id===created.id)?cur:[created,...cur]);
+      await cacheUpsert(created);
       setTitle("");setDueDate("");setAssignee("");setStatus("Tarefa criada.");
     }catch(e){setStatus(e instanceof Error?e.message:"Não foi possível criar.");}
   }
@@ -42,12 +31,15 @@ export function TasksClient({initialData}:Props){
   async function changeTask(id:string,next:string){
     try{
       const updated=await updateTask({id,status:next});
-      setTasks(cur=>cur.map(t=>t.id===updated.id?updated:t));
+      await cacheUpsert(updated);
     }catch(e){setStatus(e instanceof Error?e.message:"Não foi possível atualizar.");}
   }
 
   async function remove(id:string){
-    try{await deleteTask(id);setTasks(cur=>cur.filter(t=>t.id!==id));}catch(e){setStatus(e instanceof Error?e.message:"Não foi possível remover.");}
+    try{
+      await deleteTask(id);
+      await cacheRemove(id);
+    }catch(e){setStatus(e instanceof Error?e.message:"Não foi possível remover.");}
   }
 
   const visible=useMemo(()=>filter==="all"?tasks:tasks.filter(t=>t.status===filter),[tasks,filter]);

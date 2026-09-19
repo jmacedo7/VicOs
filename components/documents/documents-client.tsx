@@ -35,7 +35,7 @@ export function DocumentsClient({ initialData }: Props) {
     const doc=selected;
     if(!doc)return;
     setTitle(doc.title); setContent(doc.content); setVersion(doc.version); setStatus("");
-    void getDocumentVersions(doc.id).then(setHistory).catch(()=>setHistory([]);
+    void getDocumentVersions(doc.id).then(setHistory).catch(()=>setHistory([]));
   },[selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function select(id:string){ setSelectedId(id); }
